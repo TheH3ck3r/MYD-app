@@ -1,39 +1,22 @@
-import { StyleSheet, View } from "react-native";
-import { Button, Text } from "react-native-paper";
+import { useState } from "react";
+import { View, Text, Button } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TopBar } from "@/components/TopBar";
+import { SideMenu } from "@/components/SideMenu";
+// import { SideMenu } from "@/components/SideMenu";
 
 export default function HomeScreen() {
+  const [menuVisible, setMenuVisible] = useState(false);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text variant="headlineMedium" style={styles.title}>
-          MYD
-        </Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>
-          Make your dream
-        </Text>
-        <Button mode="contained" onPress={() => console.log("pressed")}>
-          Тестовая кнопка
-        </Button>
+    <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
+      <TopBar onMenuPress={() => setMenuVisible(true)} />
+
+      <View className="flex-1 items-center justify-center">
+        <Text className="text-foreground text-base">Главный экран</Text>
       </View>
+
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  title: {
-    fontWeight: "bold",
-  },
-  subtitle: {
-    opacity: 0.6,
-  },
-});

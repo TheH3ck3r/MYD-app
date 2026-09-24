@@ -38,3 +38,7 @@ example
 /ios
 /android
 .vscode
+
+# Other
+
+.idea

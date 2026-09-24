@@ -1,12 +1,19 @@
+import "../global.css";
+
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { PaperProvider } from "react-native-paper";
+import { useEffect } from "react";
+import { colorScheme } from "nativewind";
 
 export default function RootLayout() {
+  useEffect(() => {
+    colorScheme.set("dark");
+  }, []);
+
   return (
-    <PaperProvider>
-      <StatusBar style="auto" />
+    <>
+      <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }} />
-    </PaperProvider>
+    </>
   );
 }
