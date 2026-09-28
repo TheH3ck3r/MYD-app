@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Бренд */
+ --color-primary: 132 220 198;              /* #84DCC6 — зелёный */
+  --color-primary-pressed: 95 191 164;       /* #5FBFA4 — зелёный при нажатии */
+  --color-primary-foreground: 15 26 22;      /* #0F1A16 — текст поверх зелёного */
+
+  --color-secondary: 255 65 0;               /* #FF4100 — оранжевый */
+  --color-secondary-pressed: 204 52 0;       /* #CC3400 — оранжевый при нажатии */
+  --color-secondary-foreground: 255 255 255; /* #FFFFFF — текст поверх оранжевого */
+
+  /* Статусы */
+  --color-success: 132 220 198;              /* #84DCC6 — успех = primary */
+  --color-failed: 255 65 0;                  /* #FF4100 — провал = secondary */
+
+  /* Ошибки */
+  --color-error: 255 92 92;                  /* #FF5C5C — красный алерт */
+  --color-error-foreground: 255 255 255;     /* #FFFFFF — текст поверх красного */
+
+  /* Слои фона */
+  --color-background: 18 20 23;              /* #121417 — фон всей страницы */
+  --color-surface: 30 34 38;                 /* #1E2226 — фон карточки/панели */
+  --color-surface-elevated: 42 47 53;        /* #2A2F35 — фон поверх карточки (меню, модалка) */
+
+  /* Текст */
+  --color-foreground: 245 246 247;           /* #F5F6F7 — основной текст */
+  --color-muted-foreground: 156 163 175;     /* #9CA3AF — приглушённый текст (хинты, подписи) */
+
+  /* Границы */
+  --color-border: 58 64 71;                  /* #3A4047 — бордеры */
+}
