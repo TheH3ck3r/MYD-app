@@ -1,4 +1,6 @@
 import { CheckIcon } from "@/assets/icons/CheckIcon";
+import { CrossIcon } from "@/assets/icons/CrossIcon";
+import { DashIcon } from "@/assets/icons/DashIcon";
 import { TaskStatus } from "@/types/task";
 import { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
@@ -25,6 +27,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const Checkbox = ({ status, onPress }: CheckboxProps) => {
   const checkProgress = useSharedValue(status === "done" ? 1 : 0);
+  const crossProgress = useSharedValue(status === "failed" ? 1 : 0);
+  const dashProgress = useSharedValue(status === "excused" ? 1 : 0);
   const isFirst = useRef(true);
 
   const scale = useSharedValue(1);
@@ -33,12 +37,21 @@ export const Checkbox = ({ status, onPress }: CheckboxProps) => {
   }));
 
   useEffect(() => {
-    checkProgress.value = isFirst.current
-      ? status === "done"
-        ? 1
-        : 0
-      : withTiming(status === "done" ? 1 : 0, { duration: 200 });
-    isFirst.current = false;
+    const checkTarget = status === "done" ? 1 : 0;
+    const crossTarget = status === "failed" ? 1 : 0;
+    const dashTarget = status === "excused" ? 1 : 0;
+
+    if (isFirst.current) {
+      checkProgress.value = checkTarget;
+      crossProgress.value = crossTarget;
+      dashProgress.value = dashTarget;
+      isFirst.current = false;
+      return;
+    }
+
+    checkProgress.value = withTiming(checkTarget, { duration: 200 });
+    crossProgress.value = withTiming(crossTarget, { duration: 250 });
+    dashProgress.value = withTiming(dashTarget, { duration: 200 });
   }, [status]);
 
   const styles = STATUS_STYLE[status];
@@ -60,6 +73,12 @@ export const Checkbox = ({ status, onPress }: CheckboxProps) => {
       >
         <View className="absolute">
           <CheckIcon progress={checkProgress} />
+        </View>
+        <View className="absolute">
+          <CrossIcon progress={crossProgress} />
+        </View>
+        <View className="absolute">
+          <DashIcon progress={dashProgress} />
         </View>
       </View>
     </AnimatedPressable>
