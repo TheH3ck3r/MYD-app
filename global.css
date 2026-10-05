@@ -4,7 +4,7 @@
 
 :root {
   /* Бренд */
- --color-primary: 132 220 198;              /* #84DCC6 — зелёный */
+  --color-primary: 132 220 198;              /* #84DCC6 — зелёный */
   --color-primary-pressed: 95 191 164;       /* #5FBFA4 — зелёный при нажатии */
   --color-primary-foreground: 15 26 22;      /* #0F1A16 — текст поверх зелёного */
 

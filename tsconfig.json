@@ -9,6 +9,9 @@
       "@/components/*": [
         "./components/*"
       ],
+      "@/ui/*": [
+        "./ui/*"
+      ],
       "@/assets/*": [
         "./assets/*"
       ]
