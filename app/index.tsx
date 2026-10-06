@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { View, Text, Button } from "react-native";
+import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
 import { EditButton } from "@/ui/EditButton";
-import { Checkbox } from "@/ui/Checkbox";
 import { TaskStatus } from "@/types/task";
+import { Task } from "@/components/Task";
 
 export default function HomeScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
@@ -21,7 +21,18 @@ export default function HomeScreen() {
       <View className="flex-1 items-center justify-center gap-4">
         <Text className="text-foreground text-base">Главный экран</Text>
 
-        <View className="flex-row gap-4">
+        <Task
+          title={"Делать зарядку утром"}
+          status={"done"}
+          onToggle={() => {
+            console.log("test");
+          }}
+          onPress={() => {
+            console.log("test");
+          }}
+        ></Task>
+
+        {/* <View className="flex-row gap-4">
           <Checkbox status={status1} onPress={() => setStatus1("done")} />
           <Checkbox status={status2} onPress={() => setStatus2("failed")} />
           <Checkbox status={status3} onPress={() => setStatus3("excused")} />
@@ -34,7 +45,7 @@ export default function HomeScreen() {
             setStatus2("todo");
             setStatus3("todo");
           }}
-        ></Button>
+        ></Button> */}
       </View>
 
       <EditButton
