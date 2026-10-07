@@ -1,38 +1,51 @@
-import { TaskStatus } from "@/types/task";
+import { TaskItem, TaskStatus } from "@/types/task";
 import { Checkbox } from "@/ui/Checkbox";
+import { memo } from "react";
 import { Pressable, View, Text } from "react-native";
 
 type TaskProps = {
-  title: string;
-  status: TaskStatus;
-  onToggle: () => void;
-  onPress: () => void;
-  onLongPress?: () => void;
+  item: TaskItem;
+  depth?: number;
+  onToggle: (id: string) => void;
+  onPress: (id: string) => void;
+  onLongPress?: (id: string) => void;
 };
 
-export const Task = ({
-  title,
-  status,
-  onToggle,
-  onPress,
-  onLongPress,
-}: TaskProps) => {
-  return (
-    <View className="flex-row justify-between py-2 px-4 gap-4">
-      <Pressable
-        onPress={onPress}
-        onLongPress={onLongPress}
-        delayLongPress={400}
-        className="flex-shrink"
-      >
-        <Text className="text-foreground leading-6">{title}</Text>
-      </Pressable>
+const INDENT = 24;
 
-      <View className="flex-1 self-start h-6 justify-center">
-        <View className="h-px border-dotted border-t-2 border-border" />
+export const Task = memo(
+  ({ item, depth = 0, onToggle, onPress, onLongPress }: TaskProps) => {
+    return (
+      <View className="flex-col">
+        <View
+          className="flex-row justify-between py-2 px-4 gap-4"
+          style={{ paddingLeft: depth * INDENT }}
+        >
+          <Pressable
+            onPress={() => onPress(item.id)}
+            onLongPress={onLongPress ? () => onLongPress(item.id) : undefined}
+            delayLongPress={400}
+            className="flex-1"
+          >
+            <Text className="text-foreground text-base leading-6 ">
+              {item.title}
+            </Text>
+          </Pressable>
+
+          <Checkbox status={item.status} onPress={() => onToggle(item.id)} />
+        </View>
+
+        {item.children.map((child) => (
+          <Task
+            key={child.id}
+            item={child}
+            depth={depth + 1}
+            onToggle={onToggle}
+            onPress={onPress}
+            onLongPress={onLongPress}
+          />
+        ))}
       </View>
-
-      <Checkbox status={status} onPress={onToggle} />
-    </View>
-  );
-};
+    );
+  },
+);

@@ -1,51 +1,32 @@
 import { useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
 import { EditButton } from "@/ui/EditButton";
-import { TaskStatus } from "@/types/task";
-import { Task } from "@/components/Task";
+import { TaskList } from "@/components/TaskList";
+import { TaskItem } from "@/types/task";
+import { MOCK_TASKS } from "./testData";
 
 export default function HomeScreen() {
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [editMenuOpen, setEditMenuOpen] = useState(false);
-
-  const [status1, setStatus1] = useState<TaskStatus>("todo");
-  const [status2, setStatus2] = useState<TaskStatus>("todo");
-  const [status3, setStatus3] = useState<TaskStatus>("todo");
+  const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
-      <TopBar onMenuPress={() => setMenuVisible(true)} />
+      <TopBar />
 
-      <View className="flex-1 items-center justify-center gap-4">
-        <Text className="text-foreground text-base">Главный экран</Text>
-
-        <Task
-          title={"Делать зарядку утром"}
-          status={"done"}
+      <View className="flex-1">
+        <TaskList
+          list={tasks}
           onToggle={() => {
-            console.log("test");
+            console.log("onToggle");
           }}
           onPress={() => {
-            console.log("test");
+            console.log("onPress");
           }}
-        ></Task>
-
-        {/* <View className="flex-row gap-4">
-          <Checkbox status={status1} onPress={() => setStatus1("done")} />
-          <Checkbox status={status2} onPress={() => setStatus2("failed")} />
-          <Checkbox status={status3} onPress={() => setStatus3("excused")} />
-        </View>
-
-        <Button
-          title="очистка"
-          onPress={() => {
-            setStatus1("todo");
-            setStatus2("todo");
-            setStatus3("todo");
+          onLongPress={() => {
+            console.log("onLongPress");
           }}
-        ></Button> */}
+        />
       </View>
 
       <EditButton

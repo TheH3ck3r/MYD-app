@@ -4,17 +4,24 @@ export type TaskKind = "regular" | "recurring";
 
 export type DayState = "perfect" | "soft" | "failed" | "empty" | "unmarked";
 
-// export type Task = {
-//   id: string;
-//   parentId: string | null;
-//   title: string;
-//   kind: TaskKind;
-//   position: number;
-//   createdAt: number;
-//   updatedAt: number;
-//   archivedAt: number | null;
-//   note: string | null;
-// };
+export type Task = {
+  id: string;
+  parentId: string | null;
+  title: string;
+  kind: TaskKind;
+  position: number;
+  createdAt: number;
+  updatedAt: number;
+  archivedAt: number | null;
+  note: string | null;
+};
+
+export type TaskItem = {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  children: TaskItem[];
+};
 
 // export type RecurrenceRule =
 //   | { frequency: 'daily';   interval: number; startsAt: number; endsAt: number | null }
