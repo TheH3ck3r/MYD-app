@@ -1,5 +1,4 @@
-// src/assets/icons/CrossIcon.tsx
-import { IconProps } from "@/types/icons";
+import { AnimatedIconProps } from "@/types/icons";
 import Animated, {
   interpolate,
   useAnimatedProps,
@@ -18,7 +17,7 @@ export const CrossIcon = ({
   progress,
   size = 16,
   color = "white",
-}: IconProps) => {
+}: AnimatedIconProps) => {
   const topProps = useAnimatedProps(() => ({
     strokeDashoffset: LINE_LENGTH * (1 - progress.value),
   }));

@@ -1,6 +1,7 @@
+import { IconProps } from "@/types/icons";
 import Svg, { Path } from "react-native-svg";
 
-export const EditSquareIcon = ({ size = 24, color = "black" }) => (
+export const EditSquareIcon = ({ size = 24, color = "black" }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M2.6663 23.9967H21.3304C22.7969 23.9967 23.9967 22.7969 23.9967 21.3304V10.6652H21.3304V21.3304H2.6663V2.6663H13.3315V0H2.6663C1.19984 0 0 1.19984 0 2.6663V21.3304C0 22.7969 1.19984 23.9967 2.6663 23.9967Z"

@@ -1,4 +1,4 @@
-import { IconProps } from "@/types/icons";
+import { AnimatedIconProps } from "@/types/icons";
 import Animated, { useAnimatedProps } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
@@ -12,7 +12,7 @@ export const DashIcon = ({
   progress,
   size = 16,
   color = "white",
-}: IconProps) => {
+}: AnimatedIconProps) => {
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: DASH_LENGTH * (1 - progress.value),
   }));
