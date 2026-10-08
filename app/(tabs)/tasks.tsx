@@ -5,19 +5,14 @@ import { TopBar } from "@/components/TopBar";
 import { EditButton } from "@/ui/EditButton";
 import { TaskList } from "@/components/TaskList";
 import { TaskItem } from "@/types/task";
-import { MOCK_TASKS } from "./testData";
-import { FireIcon } from "@/assets/icons/FireIcon";
-import { BoltIcon } from "@/assets/icons/BoltIcon";
-import { SettingsIcon } from "@/assets/icons/Settingsicon";
-import { CalendarIcon } from "@/assets/icons/CalendarIcon";
-import { ListIcon } from "@/assets/icons/Listicon";
+import { MOCK_TASKS } from "../../constants/testData";
 
 export default function HomeScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
-      <TopBar />
+      <TopBar title={"Цели и задачи"} />
 
       <View className="flex-1">
         <TaskList
@@ -32,14 +27,6 @@ export default function HomeScreen() {
             console.log("onLongPress");
           }}
         />
-      </View>
-
-      <View className="flex-1 items-center gap-4">
-        <FireIcon></FireIcon>
-        <BoltIcon></BoltIcon>
-        <SettingsIcon></SettingsIcon>
-        <CalendarIcon></CalendarIcon>
-        <ListIcon></ListIcon>
       </View>
 
       <EditButton
