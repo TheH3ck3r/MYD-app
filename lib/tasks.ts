@@ -1,4 +1,3 @@
-// src/lib/tree.ts
 import { Task, TaskItem, TaskStatus } from "@/types/task";
 
 export function buildTree(
@@ -41,3 +40,35 @@ export function buildTree(
 
   return roots;
 }
+
+/**
+ * Рекурсивно обновляет статус задачи по id.
+ * Возвращает новое дерево (иммутабельно).
+ * Если задача не найдена — возвращает тот же массив.
+ */
+export const updateTaskStatus = (
+  items: TaskItem[],
+  id: string,
+  status: TaskStatus,
+): TaskItem[] => {
+  let changed = false;
+
+  const next = items.map((item) => {
+    if (item.id === id) {
+      changed = true;
+      return { ...item, status };
+    }
+
+    if (item.children.length > 0) {
+      const updatedChildren = updateTaskStatus(item.children, id, status);
+      if (updatedChildren !== item.children) {
+        changed = true;
+        return { ...item, children: updatedChildren };
+      }
+    }
+
+    return item;
+  });
+
+  return changed ? next : items;
+};

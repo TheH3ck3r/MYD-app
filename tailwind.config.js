@@ -26,12 +26,14 @@ module.exports = {
         failed: "rgb(var(--color-failed) / <alpha-value>)",
 
         error: "rgb(var(--color-error) / <alpha-value>)",
+
         "error-foreground":
           "rgb(var(--color-error-foreground) / <alpha-value>)",
 
         background: "rgb(var(--color-background) / <alpha-value>)",
 
         surface: "rgb(var(--color-surface) / <alpha-value>)",
+
         "surface-elevated":
           "rgb(var(--color-surface-elevated) / <alpha-value>)",
 

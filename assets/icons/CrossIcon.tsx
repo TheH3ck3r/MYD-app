@@ -1,7 +1,8 @@
-import { AnimatedIconProps } from "@/types/icons";
+import { IconProps } from "@/types/icons";
 import Animated, {
   interpolate,
   useAnimatedProps,
+  useSharedValue,
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
@@ -14,10 +15,13 @@ const LINE_STROKE = 3;
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export const CrossIcon = ({
-  progress,
+  progress: progressProp,
   size = 16,
   color = "white",
-}: AnimatedIconProps) => {
+}: IconProps) => {
+  const fallback = useSharedValue(1);
+  const progress = progressProp ?? fallback;
+
   const topProps = useAnimatedProps(() => ({
     strokeDashoffset: LINE_LENGTH * (1 - progress.value),
   }));

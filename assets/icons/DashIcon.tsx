@@ -1,5 +1,8 @@
-import { AnimatedIconProps } from "@/types/icons";
-import Animated, { useAnimatedProps } from "react-native-reanimated";
+import { IconProps } from "@/types/icons";
+import Animated, {
+  useAnimatedProps,
+  useSharedValue,
+} from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
 const DASH_PATH = "M6 12L18 12";
@@ -9,10 +12,13 @@ const DASH_STROKE = 3;
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export const DashIcon = ({
-  progress,
+  progress: progressProp,
   size = 16,
   color = "white",
-}: AnimatedIconProps) => {
+}: IconProps) => {
+  const fallback = useSharedValue(1);
+  const progress = progressProp ?? fallback;
+
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: DASH_LENGTH * (1 - progress.value),
   }));
