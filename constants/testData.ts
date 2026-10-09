@@ -1,4 +1,4 @@
-import { TaskItem } from "@/types/task";
+import { TaskItem } from "@/types/tasks";
 
 export const MOCK_TASKS: TaskItem[] = [
   {
@@ -53,7 +53,7 @@ export const MOCK_TASKS: TaskItem[] = [
       {
         id: "2-2",
         title: "Пробежать 5 км",
-        status: "excused",
+        status: "paused",
         children: [],
       },
     ],

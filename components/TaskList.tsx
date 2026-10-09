@@ -1,5 +1,5 @@
 import { ScrollView, View } from "react-native";
-import { TaskItem } from "@/types/task";
+import { TaskItem } from "@/types/tasks";
 import { Task } from "./Task";
 
 type TaskListProps = {

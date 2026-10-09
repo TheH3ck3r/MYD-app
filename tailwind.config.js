@@ -11,13 +11,17 @@ module.exports = {
     extend: {
       colors: {
         primary: "rgb(var(--color-primary) / <alpha-value>)",
+
         "primary-pressed": "rgb(var(--color-primary-pressed) / <alpha-value>)",
+
         "primary-foreground":
           "rgb(var(--color-primary-foreground) / <alpha-value>)",
 
         secondary: "rgb(var(--color-secondary) / <alpha-value>)",
+
         "secondary-pressed":
           "rgb(var(--color-secondary-pressed) / <alpha-value>)",
+
         "secondary-foreground":
           "rgb(var(--color-secondary-foreground) / <alpha-value>)",
 

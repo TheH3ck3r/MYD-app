@@ -1,4 +1,4 @@
-export type TaskStatus = "todo" | "done" | "failed" | "excused";
+export type TaskStatus = "todo" | "done" | "failed" | "excused" | "paused";
 
 export type TaskKind = "regular" | "recurring";
 
@@ -21,6 +21,19 @@ export type TaskItem = {
   title: string;
   status: TaskStatus;
   children: TaskItem[];
+};
+
+export type TaskStatusChange = {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  /** true — родитель подстроился автоматически */
+  auto: boolean;
+};
+
+export type TaskStatusChangeResult = {
+  tree: TaskItem[];
+  changes: TaskStatusChange[];
 };
 
 // export type RecurrenceRule =

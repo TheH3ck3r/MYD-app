@@ -1,7 +1,8 @@
 import { CheckIcon } from "@/assets/icons/CheckIcon";
 import { CrossIcon } from "@/assets/icons/CrossIcon";
 import { DashIcon } from "@/assets/icons/DashIcon";
-import { TaskStatus } from "@/types/task";
+import { PauseIcon } from "@/assets/icons/PasuseIcon";
+import { TaskStatus } from "@/types/tasks";
 import { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
 import Animated, {
@@ -21,6 +22,7 @@ const STATUS_STYLE: Record<TaskStatus, { bg: string; border: string }> = {
   done: { bg: "bg-success", border: "border-success" },
   failed: { bg: "bg-failed", border: "border-failed" },
   excused: { bg: "bg-muted-foreground", border: "border-muted-foreground" },
+  paused: { bg: "bg-muted-foreground", border: "border-muted-foreground" },
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -29,6 +31,7 @@ export const Checkbox = ({ status, onPress }: CheckboxProps) => {
   const checkProgress = useSharedValue(status === "done" ? 1 : 0);
   const crossProgress = useSharedValue(status === "failed" ? 1 : 0);
   const dashProgress = useSharedValue(status === "excused" ? 1 : 0);
+  const pausedProgress = useSharedValue(status === "paused" ? 1 : 0);
   const isFirst = useRef(true);
 
   const scale = useSharedValue(1);
@@ -40,18 +43,21 @@ export const Checkbox = ({ status, onPress }: CheckboxProps) => {
     const checkTarget = status === "done" ? 1 : 0;
     const crossTarget = status === "failed" ? 1 : 0;
     const dashTarget = status === "excused" ? 1 : 0;
+    const pausedTarget = status === "paused" ? 1 : 0;
 
     if (isFirst.current) {
       checkProgress.value = checkTarget;
       crossProgress.value = crossTarget;
       dashProgress.value = dashTarget;
+      pausedProgress.value = pausedTarget;
       isFirst.current = false;
       return;
     }
 
     checkProgress.value = withTiming(checkTarget, { duration: 200 });
-    crossProgress.value = withTiming(crossTarget, { duration: 250 });
+    crossProgress.value = withTiming(crossTarget, { duration: 200 });
     dashProgress.value = withTiming(dashTarget, { duration: 200 });
+    pausedProgress.value = withTiming(pausedTarget, { duration: 200 });
   }, [status]);
 
   const styles = STATUS_STYLE[status];
@@ -79,6 +85,9 @@ export const Checkbox = ({ status, onPress }: CheckboxProps) => {
         </View>
         <View className="absolute">
           <DashIcon progress={dashProgress} />
+        </View>
+        <View className="absolute">
+          <PauseIcon progress={pausedProgress} size={16} color="white" />
         </View>
       </View>
     </AnimatedPressable>

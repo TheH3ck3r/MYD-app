@@ -1,4 +1,4 @@
-import { TaskItem, TaskStatus } from "@/types/task";
+import { TaskItem } from "@/types/tasks";
 import { Checkbox } from "@/ui/Checkbox";
 import { memo } from "react";
 import { Pressable, View, Text } from "react-native";

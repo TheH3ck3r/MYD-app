@@ -1,7 +1,7 @@
 import { CheckIcon } from "@/assets/icons/CheckIcon";
 import { CrossIcon } from "@/assets/icons/CrossIcon";
-import { DashIcon } from "@/assets/icons/DashIcon";
-import { TaskStatus } from "@/types/task";
+import { PauseIcon } from "@/assets/icons/PasuseIcon";
+import { TaskStatus } from "@/types/tasks";
 import { Pressable, Text, View } from "react-native";
 
 const LABEL: Record<TaskStatus, string> = {
@@ -9,15 +9,20 @@ const LABEL: Record<TaskStatus, string> = {
   done: "Выполнено",
   failed: "Провалено",
   excused: "Пропущено",
+  paused: "Отложено",
 };
 
-type Props = {
+type RegularActionStatusItemProps = {
   status: TaskStatus;
   active: boolean;
   onPress: () => void;
 };
 
-export const ActionItemStatus = ({ status, active, onPress }: Props) => {
+export const RegularActionStatusItem = ({
+  status,
+  active,
+  onPress,
+}: RegularActionStatusItemProps) => {
   return (
     <Pressable
       onPress={onPress}
@@ -27,28 +32,28 @@ export const ActionItemStatus = ({ status, active, onPress }: Props) => {
     >
       <View className="w-6 h-6 items-center justify-center">
         {status === "todo" && (
-          <View className="w-5 h-5 rounded border-2 border-border" />
+          <View className="w-6 h-6 rounded border-2 border-border" />
         )}
         {status === "done" && (
           <View className="w-6 h-6 rounded bg-success items-center justify-center">
-            <CheckIcon size={14} color="white" />
+            <CheckIcon size={14} />
           </View>
         )}
         {status === "failed" && (
           <View className="w-6 h-6 rounded bg-failed items-center justify-center">
-            <CrossIcon size={14} color="white" />
+            <CrossIcon size={14} />
           </View>
         )}
-        {status === "excused" && (
+        {status === "paused" && (
           <View className="w-6 h-6 rounded bg-muted-foreground items-center justify-center">
-            <DashIcon size={14} color="white" />
+            <PauseIcon size={14} />
           </View>
         )}
       </View>
 
       <Text
         className={`text-base ${
-          active ? "text-primary font-semibold" : "text-foreground"
+          active ? "text-foreground font-semibold" : "text-foreground"
         }`}
       >
         {LABEL[status]}

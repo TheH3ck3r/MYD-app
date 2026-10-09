@@ -3,45 +3,32 @@ import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
 import { TaskList } from "@/components/TaskList";
-import { TaskItem, TaskStatus } from "@/types/task";
+import { TaskItem, TaskStatus } from "@/types/tasks";
 import { MOCK_TASKS } from "../../constants/testData";
-import { updateTaskStatus } from "@/lib/tasks";
 import { ActionSheet } from "@/ui/ActionSheet";
 import { EditButton } from "@/components/EditButton";
-import { ActionItemStatus } from "@/components/ActionStatusItem";
+import { RegularActionStatusItem } from "@/components/RegularActionStatusItem";
+import { tasksStore } from "@/stores/tasksStore";
 
-export default function HomeScreen() {
+export default function TasksScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);
   const [taskIdForAction, setTaskIdForAction] = useState<string | null>(null);
 
-  const STATUSES: TaskStatus[] = ["todo", "done", "failed", "excused"];
-
-  const findTask = (items: TaskItem[], id: string): TaskItem | null => {
-    for (const item of items) {
-      if (item.id === id) return item;
-      const found = findTask(item.children, id);
-      if (found) return found;
-    }
-    return null;
-  };
+  const STATUSES: TaskStatus[] = ["todo", "done", "failed", "paused"];
 
   const actionSheetTask = taskIdForAction
-    ? findTask(tasks, taskIdForAction)
+    ? tasksStore.findTask(tasks, taskIdForAction)
     : null;
 
   const handleToggle = (id: string) => {
-    setTasks((prev) => {
-      const task = findTask(prev, id);
-      if (!task) return prev;
-
-      const next: TaskStatus = task.status === "todo" ? "done" : "todo";
-      return updateTaskStatus(prev, id, next);
-    });
+    const { tree } = tasksStore.toggle(tasks, id);
+    setTasks(tree);
   };
 
   const handleUpdateStatus = (status: TaskStatus) => {
     if (!taskIdForAction) return;
-    setTasks((prev) => updateTaskStatus(prev, taskIdForAction, status));
+    const { tree } = tasksStore.setTaskStatus(tasks, taskIdForAction, status);
+    setTasks(tree);
     setTaskIdForAction(null);
   };
 
@@ -72,7 +59,7 @@ export default function HomeScreen() {
         onClose={() => setTaskIdForAction(null)}
       >
         {STATUSES.map((status) => (
-          <ActionItemStatus
+          <RegularActionStatusItem
             key={status}
             status={status}
             active={status === actionSheetTask?.status}
