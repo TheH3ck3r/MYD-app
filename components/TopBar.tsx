@@ -1,5 +1,4 @@
-import { BoltIcon } from "@/assets/icons/BoltIcon";
-import { FireIcon } from "@/assets/icons/FireIcon";
+import { BoltIcon, FireIcon } from "@/assets/icons";
 import { Text, View } from "react-native";
 
 type Props = {

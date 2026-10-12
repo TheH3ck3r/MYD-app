@@ -1,6 +1,5 @@
-import { CalendarIcon } from "@/assets/icons/CalendarIcon";
-import { ListIcon } from "@/assets/icons/Listicon";
-import { SettingsIcon } from "@/assets/icons/Settingsicon";
+import { CalendarIcon } from "@/assets/icons";
+import { ListIcon, SettingsIcon } from "@/assets/icons";
 import { Tabs } from "expo-router";
 
 export default function TabsLayout() {

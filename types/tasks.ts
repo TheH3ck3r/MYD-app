@@ -4,6 +4,8 @@ export type TaskKind = "regular" | "recurring";
 
 export type DayState = "perfect" | "soft" | "failed" | "empty" | "unmarked";
 
+export type TaskActionContext = "regular" | "daily";
+
 export type Task = {
   id: string;
   parentId: string | null;

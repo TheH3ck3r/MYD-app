@@ -6,19 +6,17 @@ import { TaskList } from "@/components/TaskList";
 import { TaskItem, TaskStatus } from "@/types/tasks";
 import { MOCK_TASKS } from "../../constants/testData";
 import { ActionSheet } from "@/ui/ActionSheet";
-import { EditButton } from "@/components/EditButton";
-import { RegularActionStatusItem } from "@/components/RegularActionStatusItem";
+import { AddTaskButton } from "@/components/AddTaskButton";
+import { TaskAction } from "@/components/TaskAction";
 import { tasksStore } from "@/stores/tasksStore";
 
 export default function TasksScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);
-  const [taskIdForAction, setTaskIdForAction] = useState<string | null>(null);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const STATUSES: TaskStatus[] = ["todo", "done", "failed", "paused"];
 
-  const actionSheetTask = taskIdForAction
-    ? tasksStore.findTask(tasks, taskIdForAction)
-    : null;
+  const openTask = openTaskId ? tasksStore.findTask(tasks, openTaskId) : null;
 
   const handleToggle = (id: string) => {
     const { tree } = tasksStore.toggle(tasks, id);
@@ -26,10 +24,49 @@ export default function TasksScreen() {
   };
 
   const handleUpdateStatus = (status: TaskStatus) => {
-    if (!taskIdForAction) return;
-    const { tree } = tasksStore.setTaskStatus(tasks, taskIdForAction, status);
+    if (!openTaskId) return;
+    const { tree } = tasksStore.setTaskStatus(tasks, openTaskId, status);
     setTasks(tree);
-    setTaskIdForAction(null);
+    setOpenTaskId(null);
+  };
+
+  const handleAdd = () => {
+    // TODO: открыть TaskFormSheet с parentId=null
+    console.log("add root task");
+  };
+
+  const handleAddSubtask = () => {
+    if (!openTaskId) return;
+    const parentId = openTaskId;
+    setOpenTaskId(null);
+    // TODO: открыть TaskFormSheet с parentId
+    console.log("add subtask to", parentId);
+  };
+
+  const handleEdit = () => {
+    if (!openTaskId) return;
+    const taskId = openTaskId;
+    setOpenTaskId(null);
+    // TODO: открыть TaskFormSheet в режиме edit
+    console.log("edit", taskId);
+  };
+
+  const handleDelete = () => {
+    if (!openTaskId) return;
+    const taskId = openTaskId;
+    setOpenTaskId(null);
+
+    // Alert.alert("Удалить задачу?", "Это действие нельзя отменить.", [
+    //   { text: "Отмена", style: "cancel" },
+    //   {
+    //     text: "Удалить",
+    //     style: "destructive",
+    //     onPress: () => {
+    //       // TODO: tasksStore.deleteTask(tasks, taskId)
+    //       console.log("delete", taskId);
+    //     },
+    //   },
+    // ]);
   };
 
   return (
@@ -40,33 +77,25 @@ export default function TasksScreen() {
         <TaskList
           list={tasks}
           onToggle={(id) => handleToggle(id)}
-          onPress={(id) => setTaskIdForAction(id)}
+          onPress={(id) => setOpenTaskId(id)}
           onLongPress={() => {
             console.log("onLongPress");
           }}
         />
       </View>
 
-      <EditButton
-        onPress={() => {
-          console.log("test");
-        }}
-      />
+      <AddTaskButton onPress={() => handleAdd} context={"regular"} />
 
-      <ActionSheet
-        visible={taskIdForAction !== null}
-        title="Статус задачи"
-        onClose={() => setTaskIdForAction(null)}
-      >
-        {STATUSES.map((status) => (
-          <RegularActionStatusItem
-            key={status}
-            status={status}
-            active={status === actionSheetTask?.status}
-            onPress={() => handleUpdateStatus(status)}
-          />
-        ))}
-      </ActionSheet>
+      <TaskAction
+        visible={openTaskId !== null}
+        task={openTask}
+        context="regular"
+        onStatusChange={handleUpdateStatus}
+        onEdit={handleEdit}
+        onAddSubtask={handleAddSubtask}
+        onDelete={handleDelete}
+        onClose={() => setOpenTaskId(null)}
+      />
     </SafeAreaView>
   );
 }
