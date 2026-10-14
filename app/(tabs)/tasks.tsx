@@ -5,18 +5,27 @@ import { TopBar } from "@/components/TopBar";
 import { TaskList } from "@/components/TaskList";
 import { TaskItem, TaskStatus } from "@/types/tasks";
 import { MOCK_TASKS } from "../../constants/testData";
-import { ActionSheet } from "@/ui/ActionSheet";
 import { AddTaskButton } from "@/components/AddTaskButton";
 import { TaskAction } from "@/components/TaskAction";
 import { tasksStore } from "@/stores/tasksStore";
+import { TaskFormSheet, TaskFormValues } from "@/components/TaskFormSheet";
+
+type FormState =
+  | { type: "create"; parentId: string | null }
+  | { type: "edit"; taskId: string }
+  | null;
 
 export default function TasksScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
-
-  const STATUSES: TaskStatus[] = ["todo", "done", "failed", "paused"];
+  const [formState, setFormState] = useState<FormState>(null);
 
   const openTask = openTaskId ? tasksStore.findTask(tasks, openTaskId) : null;
+
+  const formTask =
+    formState?.type === "edit"
+      ? tasksStore.findTask(tasks, formState.taskId)
+      : null;
 
   const handleToggle = (id: string) => {
     const { tree } = tasksStore.toggle(tasks, id);
@@ -31,42 +40,42 @@ export default function TasksScreen() {
   };
 
   const handleAdd = () => {
-    // TODO: открыть TaskFormSheet с parentId=null
-    console.log("add root task");
+    setFormState({ type: "create", parentId: null });
   };
 
   const handleAddSubtask = () => {
     if (!openTaskId) return;
     const parentId = openTaskId;
     setOpenTaskId(null);
-    // TODO: открыть TaskFormSheet с parentId
-    console.log("add subtask to", parentId);
+    setFormState({ type: "create", parentId });
   };
 
   const handleEdit = () => {
     if (!openTaskId) return;
     const taskId = openTaskId;
     setOpenTaskId(null);
-    // TODO: открыть TaskFormSheet в режиме edit
-    console.log("edit", taskId);
+    setFormState({ type: "edit", taskId });
   };
 
   const handleDelete = () => {
+    // TODO: Добавить модалку предупреждения
     if (!openTaskId) return;
     const taskId = openTaskId;
     setOpenTaskId(null);
 
-    // Alert.alert("Удалить задачу?", "Это действие нельзя отменить.", [
-    //   { text: "Отмена", style: "cancel" },
-    //   {
-    //     text: "Удалить",
-    //     style: "destructive",
-    //     onPress: () => {
-    //       // TODO: tasksStore.deleteTask(tasks, taskId)
-    //       console.log("delete", taskId);
-    //     },
-    //   },
-    // ]);
+    tasksStore.deleteTask(tasks, taskId);
+  };
+
+  const handleSubmit = (values: TaskFormValues) => {
+    if (!formState) return;
+
+    if (formState.type === "create") {
+      tasksStore.addTask(tasks, formState.parentId, values);
+    } else {
+      tasksStore.updateTask(tasks, formState.taskId, values);
+    }
+
+    setFormState(null);
   };
 
   return (
@@ -84,7 +93,7 @@ export default function TasksScreen() {
         />
       </View>
 
-      <AddTaskButton onPress={() => handleAdd} context={"regular"} />
+      <AddTaskButton onPress={() => handleAdd()} context={"regular"} />
 
       <TaskAction
         visible={openTaskId !== null}
@@ -95,6 +104,25 @@ export default function TasksScreen() {
         onAddSubtask={handleAddSubtask}
         onDelete={handleDelete}
         onClose={() => setOpenTaskId(null)}
+      />
+
+      <TaskFormSheet
+        visible={formState !== null}
+        mode={formState?.type === "edit" ? "edit" : "create"}
+        title={
+          formState?.type === "edit"
+            ? "Редактировать задачу"
+            : formState?.parentId
+              ? "Новая подзадача"
+              : "Новая задача"
+        }
+        initialValues={
+          formTask
+            ? { title: formTask.title, note: "" /* TODO: task.note */ }
+            : undefined
+        }
+        onSubmit={() => handleSubmit}
+        onClose={() => setFormState(null)}
       />
     </SafeAreaView>
   );

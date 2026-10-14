@@ -10,6 +10,7 @@ import {
 import { TaskItem, TaskStatus } from "@/types/tasks";
 import { ActionSheet } from "@/ui/ActionSheet";
 import { Button, ButtonIcon, ButtonText } from "@/ui/Button";
+import { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 
 export type TaskActionContext = "regular" | "daily";
@@ -27,7 +28,31 @@ const LABEL: Record<TaskStatus, string> = {
   paused: "Отложено",
 };
 
-type Props = {
+const STATUS_ICON: Record<TaskStatus, ReactNode> = {
+  todo: <View className="w-6 h-6 rounded border-2 border-border" />,
+  done: (
+    <View className="w-6 h-6 rounded bg-success items-center justify-center">
+      <CheckIcon size={14} />
+    </View>
+  ),
+  failed: (
+    <View className="w-6 h-6 rounded bg-failed items-center justify-center">
+      <CrossIcon size={14} />
+    </View>
+  ),
+  excused: (
+    <View className="w-6 h-6 rounded bg-muted-foreground items-center justify-center">
+      <DashIcon size={14} />
+    </View>
+  ),
+  paused: (
+    <View className="w-6 h-6 rounded bg-muted-foreground items-center justify-center">
+      <PauseIcon size={14} />
+    </View>
+  ),
+};
+
+type TaskActionProps = {
   visible: boolean;
   task: TaskItem | null;
   context: TaskActionContext;
@@ -47,11 +72,23 @@ export const TaskAction = ({
   onAddSubtask,
   onDelete,
   onClose,
-}: Props) => {
+}: TaskActionProps) => {
   const statuses = STATUSES_BY_CONTEXT[context];
 
   return (
     <ActionSheet visible={visible} title={task?.title ?? ""} onClose={onClose}>
+      {!!task?.note && task.note.trim().length > 0 && (
+        <View>
+          <View className="mx-6 mb-2 -my-2 px-3 py-2 rounded-lg bg-surface">
+            <Text className="text-sm leading-5 text-muted-foreground">
+              {task!.note}
+            </Text>
+          </View>
+
+          <View className="h-px bg-border mx-6 mt-2 mb-4" />
+        </View>
+      )}
+
       {statuses.map((status) => {
         const active = status === task?.status;
 
@@ -64,29 +101,7 @@ export const TaskAction = ({
             }`}
           >
             <View className="w-6 h-6 items-center justify-center">
-              {status === "todo" && (
-                <View className="w-6 h-6 rounded border-2 border-border" />
-              )}
-              {status === "done" && (
-                <View className="w-6 h-6 rounded bg-success items-center justify-center">
-                  <CheckIcon size={14} />
-                </View>
-              )}
-              {status === "failed" && (
-                <View className="w-6 h-6 rounded bg-failed items-center justify-center">
-                  <CrossIcon size={14} />
-                </View>
-              )}
-              {status === "excused" && (
-                <View className="w-6 h-6 rounded bg-muted-foreground items-center justify-center">
-                  <DashIcon size={14} />
-                </View>
-              )}
-              {status === "paused" && (
-                <View className="w-6 h-6 rounded bg-muted-foreground items-center justify-center">
-                  <PauseIcon size={14} />
-                </View>
-              )}
+              {STATUS_ICON[status]}
             </View>
 
             <Text
@@ -102,7 +117,7 @@ export const TaskAction = ({
 
       <View className="h-px bg-border mx-6 my-2" />
 
-      <View className="flex-col py-2">
+      <View className="flex-col">
         <Button
           variant="ghost"
           align="start"

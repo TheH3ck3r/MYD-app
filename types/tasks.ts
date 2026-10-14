@@ -21,6 +21,7 @@ export type Task = {
 export type TaskItem = {
   id: string;
   title: string;
+  note: string | null;
   status: TaskStatus;
   children: TaskItem[];
 };

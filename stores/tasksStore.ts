@@ -11,18 +11,27 @@ class TasksStore {
     makeAutoObservable(this);
   }
 
-  // Публичное API, ака обёртка над updateNode
+  // ============================================================
+  // Статусы — публичное API
+  // ============================================================
+
   setTaskStatus(
     tree: TaskItem[],
     id: string,
     status: TaskStatus,
   ): TaskStatusChangeResult {
     const changes: TaskStatusChange[] = [];
-    const newTree = this.updateNode(tree, id, status, changes);
+
+    const newTree = this.transformTree(
+      tree,
+      id,
+      (node) => this.applyDown(node, status, changes, true),
+      (parent, newChildren) => this.aggregate(parent, newChildren, changes),
+    );
+
     return { tree: newTree, changes };
   }
 
-  // Быстрый toggle: todo <-> done. Из failed/excused -> todo.
   toggle(tree: TaskItem[], id: string): TaskStatusChangeResult {
     const task = this.findTask(tree, id);
     if (!task) return { tree, changes: [] };
@@ -31,45 +40,133 @@ class TasksStore {
     return this.setTaskStatus(tree, id, next);
   }
 
-  // Рекурсивный обход дерева
-  updateNode(
+  // ============================================================
+  // CRUD — публичное API
+  // ============================================================
+
+  addTask(
+    tree: TaskItem[],
+    parentId: string | null,
+    input: { title: string; note?: string },
+  ): TaskItem[] {
+    const newTask: TaskItem = {
+      id: this.generateId(),
+      title: input.title.trim(),
+      status: "todo",
+      note: input.note?.trim() || null,
+      children: [],
+    };
+
+    if (parentId === null) {
+      return [...tree, newTask];
+    }
+
+    return this.transformTree(tree, parentId, (parent) => ({
+      ...parent,
+      children: [...parent.children, newTask],
+    }));
+  }
+
+  updateTask(
+    tree: TaskItem[],
+    id: string,
+    input: { title?: string; note?: string },
+  ): TaskItem[] {
+    return this.transformTree(tree, id, (node) => {
+      const next = { ...node };
+
+      if (input.title !== undefined) {
+        next.title = input.title.trim();
+      }
+
+      if (input.note !== undefined) {
+        const trimmed = input.note.trim();
+        next.note = trimmed.length > 0 ? trimmed : null;
+      }
+
+      return next;
+    });
+  }
+
+  deleteTask(tree: TaskItem[], id: string): TaskItem[] {
+    return this.transformTree(
+      tree,
+      id,
+      () => null,
+      (parent, newChildren) => this.aggregate(parent, newChildren),
+    );
+  }
+
+  // ============================================================
+  // Поиск — публичное API
+  // ============================================================
+
+  findTask(items: TaskItem[], id: string): TaskItem | null {
+    for (const item of items) {
+      if (item.id === id) return item;
+      const found = this.findTask(item.children, id);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // ============================================================
+  // Обход дерева — внутреннее
+  // ============================================================
+
+  private transformTree(
     items: TaskItem[],
     id: string,
-    status: TaskStatus,
-    changes: TaskStatusChange[],
+    transformer: (node: TaskItem) => TaskItem | null,
+    onParentUpdate?: (parent: TaskItem, newChildren: TaskItem[]) => TaskItem,
   ): TaskItem[] {
     let anyChanged = false;
+    const result: TaskItem[] = [];
 
-    const result = items.map((item) => {
+    for (const item of items) {
       if (item.id === id) {
-        const updated = this.applyDown(item, status, changes, true); // ← true
-        if (updated !== item) anyChanged = true;
-        return updated;
+        const transformed = transformer(item);
+        anyChanged = true;
+        if (transformed === null) continue;
+        result.push(transformed);
+        continue;
       }
 
       if (item.children.length > 0) {
-        const newChildren = this.updateNode(item.children, id, status, changes);
+        const newChildren = this.transformTree(
+          item.children,
+          id,
+          transformer,
+          onParentUpdate,
+        );
         if (newChildren !== item.children) {
           anyChanged = true;
-          return this.aggregate(item, newChildren, changes);
+          result.push(
+            onParentUpdate
+              ? onParentUpdate(item, newChildren)
+              : { ...item, children: newChildren },
+          );
+          continue;
         }
       }
 
-      return item;
-    });
+      result.push(item);
+    }
 
     return anyChanged ? result : items;
   }
 
-  // Рекурсивная установка статуса todo потомкам при статусе родителя
-  applyDown(
+  // ============================================================
+  // Логика статусов — внутреннее
+  // ============================================================
+
+  private applyDown(
     item: TaskItem,
     status: TaskStatus,
     changes: TaskStatusChange[],
     isTarget: boolean,
   ): TaskItem {
     const shouldChange = isTarget ? true : item.status === "todo";
-
     let changed = shouldChange && item.status !== status;
 
     if (changed) {
@@ -90,18 +187,21 @@ class TasksStore {
     };
   }
 
-  // Установка статуса роидтелю при одинаковых статусах всех потомков
-  aggregate(
+  private aggregate(
     item: TaskItem,
     newChildren: TaskItem[],
-    changes: TaskStatusChange[],
+    changes?: TaskStatusChange[],
   ): TaskItem {
+    if (newChildren.length === 0) {
+      return { ...item, children: newChildren };
+    }
+
     const first = newChildren[0].status;
     const allSame = newChildren.every((c) => c.status === first);
     const newStatus: TaskStatus = allSame ? first : "todo";
 
     if (newStatus !== item.status) {
-      changes.push({
+      changes?.push({
         id: item.id,
         title: item.title,
         status: newStatus,
@@ -112,14 +212,12 @@ class TasksStore {
     return { ...item, status: newStatus, children: newChildren };
   }
 
-  // Рекурсивный поиск узла
-  findTask(items: TaskItem[], id: string): TaskItem | null {
-    for (const item of items) {
-      if (item.id === id) return item;
-      const found = this.findTask(item.children, id);
-      if (found) return found;
-    }
-    return null;
+  // ============================================================
+  // Утилиты — внутреннее
+  // ============================================================
+
+  private generateId(): string {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   }
 }
 
