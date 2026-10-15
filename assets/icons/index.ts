@@ -11,3 +11,5 @@ export * from "./PauseIcon";
 export * from "./SettingsIcon";
 export * from "./PencilIcon";
 export * from "./TrashIcon";
+export * from "./InfoIcon";
+export * from "./AlertIcon";
