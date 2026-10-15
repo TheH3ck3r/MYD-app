@@ -8,25 +8,19 @@ type TaskProps = {
   depth?: number;
   onToggle: (id: string) => void;
   onPress: (id: string) => void;
-  onLongPress?: (id: string) => void;
 };
 
 const INDENT = 24;
 
 export const Task = memo(
-  ({ item, depth = 0, onToggle, onPress, onLongPress }: TaskProps) => {
+  ({ item, depth = 0, onToggle, onPress }: TaskProps) => {
     return (
       <View className="flex-col">
         <View
           className="flex-row justify-between py-2 px-4 gap-4"
           style={{ paddingLeft: depth * INDENT }}
         >
-          <Pressable
-            onPress={() => onPress(item.id)}
-            onLongPress={onLongPress ? () => onLongPress(item.id) : undefined}
-            delayLongPress={400}
-            className="flex-1"
-          >
+          <Pressable onPress={() => onPress(item.id)} className="flex-1">
             <Text className="text-foreground text-base leading-6 ">
               {item.title}
             </Text>
@@ -42,7 +36,6 @@ export const Task = memo(
             depth={depth + 1}
             onToggle={onToggle}
             onPress={onPress}
-            onLongPress={onLongPress}
           />
         ))}
       </View>

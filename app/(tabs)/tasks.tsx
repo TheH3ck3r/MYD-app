@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
@@ -6,10 +6,9 @@ import { TaskList } from "@/components/TaskList";
 import { TaskItem, TaskStatus } from "@/types/tasks";
 import { MOCK_TASKS } from "../../constants/testData";
 import { AddTaskButton } from "@/components/AddTaskButton";
-import { TaskAction } from "@/components/TaskAction";
+import { TaskSheet } from "@/components/TaskSheet";
 import { tasksStore } from "@/stores/tasksStore";
 import { TaskFormSheet, TaskFormValues } from "@/components/TaskFormSheet";
-import { notifyStore } from "@/stores/notifyStore";
 
 type FormState =
   | { type: "create"; parentId: string | null }
@@ -88,15 +87,12 @@ export default function TasksScreen() {
           list={tasks}
           onToggle={(id) => handleToggle(id)}
           onPress={(id) => setOpenTaskId(id)}
-          onLongPress={() => {
-            console.log("onLongPress");
-          }}
         />
       </View>
 
       <AddTaskButton onPress={() => handleAdd()} context={"regular"} />
 
-      <TaskAction
+      <TaskSheet
         visible={openTaskId !== null}
         task={openTask}
         context="regular"

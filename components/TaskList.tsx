@@ -6,15 +6,9 @@ type TaskListProps = {
   list: TaskItem[];
   onToggle: (id: string) => void;
   onPress: (id: string) => void;
-  onLongPress?: (id: string) => void;
 };
 
-export const TaskList = ({
-  list,
-  onToggle,
-  onPress,
-  onLongPress,
-}: TaskListProps) => {
+export const TaskList = ({ list, onToggle, onPress }: TaskListProps) => {
   return (
     <ScrollView
       contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
@@ -23,12 +17,7 @@ export const TaskList = ({
       {list.map((item, index) => (
         <View key={item.id}>
           {index > 0 && <View className="h-px bg-border my-2" />}
-          <Task
-            item={item}
-            onToggle={onToggle}
-            onPress={onPress}
-            onLongPress={onLongPress}
-          />
+          <Task item={item} onToggle={onToggle} onPress={onPress} />
         </View>
       ))}
     </ScrollView>

@@ -52,7 +52,7 @@ const STATUS_ICON: Record<TaskStatus, ReactNode> = {
   ),
 };
 
-type TaskActionProps = {
+type TaskSheetProps = {
   visible: boolean;
   task: TaskItem | null;
   context: TaskActionContext;
@@ -63,7 +63,7 @@ type TaskActionProps = {
   onClose: () => void;
 };
 
-export const TaskAction = ({
+export const TaskSheet = ({
   visible,
   task,
   context,
@@ -72,7 +72,7 @@ export const TaskAction = ({
   onAddSubtask,
   onDelete,
   onClose,
-}: TaskActionProps) => {
+}: TaskSheetProps) => {
   const statuses = STATUSES_BY_CONTEXT[context];
 
   return (
