@@ -1,4 +1,4 @@
-import { TaskItem } from "@/types/tasks";
+import { TaskItem } from "@/src/types/tasks";
 
 export const MOCK_TASKS: TaskItem[] = [
   {

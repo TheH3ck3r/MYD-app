@@ -1,4 +1,4 @@
-import { IconProps } from "@/types/icons";
+import { IconProps } from "@/src/types/icons";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
 
 export const FireIcon = ({ size = 24 }: IconProps) => {

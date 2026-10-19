@@ -1,4 +1,4 @@
-import { IconProps } from "@/types/icons";
+import { IconProps } from "@/src/types/icons";
 import Svg, { Path } from "react-native-svg";
 
 export const CalendarIcon = ({ size = 24, color = "white" }: IconProps) => {

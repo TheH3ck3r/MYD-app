@@ -4,7 +4,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
 import { TaskList } from "@/components/TaskList";
 import { TaskFormState, TaskItem, TaskStatus } from "@/types/tasks";
-import { MOCK_TASKS } from "../../constants/testData";
 import { AddTaskButton } from "@/components/AddTaskButton";
 import { TaskSheet } from "@/components/TaskSheet";
 import { tasksStore } from "@/stores/tasksStore";
@@ -12,6 +11,7 @@ import {
   RegularTaskFormSheet,
   RegularTaskFormValues,
 } from "@/components/RegularTaskFormSheet";
+import { MOCK_TASKS } from "@/constants/testData";
 
 export default function TasksScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);

@@ -1,17 +1,17 @@
-import { IconProps } from "@/types/icons";
+import { IconProps } from "@/src/types/icons";
 import Animated, {
   useAnimatedProps,
   useSharedValue,
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
-const CHECK_PATH = "M4 12L10 18L20 6";
-const CHECK_LENGTH = 25;
-const CHECK_STROKE = 3;
+const DASH_PATH = "M6 12L18 12";
+const DASH_LENGTH = 12;
+const DASH_STROKE = 3;
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-export const CheckIcon = ({
+export const DashIcon = ({
   progress: progressProp,
   size = 16,
   color = "white",
@@ -20,18 +20,18 @@ export const CheckIcon = ({
   const progress = progressProp ?? fallback;
 
   const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: CHECK_LENGTH * (1 - progress.value),
+    strokeDashoffset: DASH_LENGTH * (1 - progress.value),
   }));
 
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <AnimatedPath
-        d={CHECK_PATH}
+        d={DASH_PATH}
         stroke={color}
-        strokeWidth={CHECK_STROKE}
+        strokeWidth={DASH_STROKE}
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray={CHECK_LENGTH}
+        strokeDasharray={DASH_LENGTH}
         animatedProps={animatedProps}
       />
     </Svg>
