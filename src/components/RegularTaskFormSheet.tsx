@@ -53,8 +53,6 @@ export const RegularTaskFormSheet = ({
   }, [visible, initialValues, reset]);
 
   const submit = handleSubmit((values) => {
-    console.log("1. Валидация RHF пройдена, данные:", values);
-
     onSubmit({
       title: values.title.trim(),
       note: values.note.trim(),
@@ -129,7 +127,6 @@ export const RegularTaskFormSheet = ({
               variant="solid"
               action="primary"
               onPress={() => {
-                console.log("0. Кнопка Сохранить нажата");
                 submit();
               }}
               className={!formState.isValid ? "opacity-50" : ""}

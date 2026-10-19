@@ -1,7 +1,6 @@
 import { getDb } from "@/db/client";
 import { TaskItem, TaskStatus } from "@/types/tasks";
 
-// Тип строки из БД
 type TaskRow = {
   id: string;
   parent_id: string | null;

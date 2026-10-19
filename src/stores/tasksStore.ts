@@ -17,6 +17,7 @@ class TasksStore {
   }
 
   // Публичные методы для работы с деревом
+
   loadTasks = async () => {
     this.loading = true;
     try {
@@ -129,7 +130,7 @@ class TasksStore {
     return this.setTaskStatus(id, next);
   };
 
-  // Внутренние методы (без изменений, только для работы с деревом)
+  // Внутренние методы для работы с деревом
   private addTaskToTree(
     tree: TaskItem[],
     parentId: string | null,
