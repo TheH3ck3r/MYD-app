@@ -1,4 +1,5 @@
 import {
+  TaskFormState,
   TaskItem,
   TaskStatus,
   TaskStatusChange,
@@ -98,16 +99,25 @@ class TasksStore {
   }
 
   // ============================================================
-  // Поиск — публичное API
+  // Вспомогательные функции — публичное API
   // ============================================================
 
-  findTask(items: TaskItem[], id: string): TaskItem | null {
-    for (const item of items) {
+  findTask(tasks: TaskItem[], id: string): TaskItem | null {
+    for (const item of tasks) {
       if (item.id === id) return item;
       const found = this.findTask(item.children, id);
       if (found) return found;
     }
     return null;
+  }
+
+  openTask(tasks: TaskItem[], openTaskId: string | null): TaskItem | null {
+    return openTaskId ? this.findTask(tasks, openTaskId) : null;
+  }
+
+  getFormTask(tasks: TaskItem[], formState: TaskFormState): TaskItem | null {
+    if (formState?.type !== "edit") return null;
+    return this.findTask(tasks, formState.taskId);
   }
 
   // ============================================================

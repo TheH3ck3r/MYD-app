@@ -2,6 +2,7 @@ import { CheckIcon } from "@/assets/icons";
 import { StreakSheet } from "@/components/StreakSheet";
 import { TopBar } from "@/components/TopBar";
 import { notifyStore } from "@/stores/notifyStore";
+import { TaskFormState } from "@/types/tasks";
 import { Button, ButtonText } from "@/ui/Button";
 import { useState } from "react";
 import { Text, View } from "react-native";
@@ -9,6 +10,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DailyScreen() {
   const [isStreakSheetOpen, setIsStreakSheetOpen] = useState<boolean>(false);
+  const [formState, setFormState] = useState<TaskFormState>(null);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>

@@ -1,63 +1,72 @@
 import { ActionSheet } from "@/ui/ActionSheet";
-import { Button, ButtonText } from "@/ui/Button";
-import { useEffect, useRef } from "react";
+import { TaskFormSheetMode } from "@/types/tasks";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  TextInput,
-  View,
-  Text,
   KeyboardAvoidingView,
   Platform,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
+import { DayPicker } from "./DayPicker";
+import { Button, ButtonText } from "@/ui/Button";
 
-export type TaskFormValues = {
+const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0];
+
+export type DailyTaskFormValues = {
   title: string;
   note: string;
+  daysOfWeek: number[];
 };
 
-type Mode = "create" | "edit";
-
-type TaskFormSheetProps = {
+type DailyTaskFormSheetProps = {
   visible: boolean;
-  mode: Mode;
+  mode: TaskFormSheetMode;
   title: string;
-  initialValues?: Partial<TaskFormValues>;
-  onSubmit: (values: TaskFormValues) => void;
+  initialValues?: Partial<DailyTaskFormValues>;
+  onSubmit: (values: DailyTaskFormValues) => void;
   onClose: () => void;
 };
 
-export const TaskFormSheet = ({
+export const DailyTaskFormSheet = ({
   visible,
   mode,
   title,
   initialValues,
   onSubmit,
   onClose,
-}: TaskFormSheetProps) => {
-  const noteRef = useRef<TextInput>(null);
-
-  const { control, handleSubmit, reset, formState } = useForm<TaskFormValues>({
-    defaultValues: {
-      title: initialValues?.title ?? "",
-      note: initialValues?.note ?? "",
-    },
-  });
+}: DailyTaskFormSheetProps) => {
+  const { control, handleSubmit, reset, watch, formState } =
+    useForm<DailyTaskFormValues>({
+      defaultValues: {
+        title: initialValues?.title ?? "",
+        note: initialValues?.note ?? "",
+        daysOfWeek: initialValues?.daysOfWeek ?? ALL_DAYS,
+      },
+    });
 
   useEffect(() => {
     if (visible) {
       reset({
         title: initialValues?.title ?? "",
         note: initialValues?.note ?? "",
+        daysOfWeek: initialValues?.daysOfWeek ?? ALL_DAYS,
       });
     }
   }, [visible, initialValues, reset]);
 
+  const days = watch("daysOfWeek");
+  const hasDays = days.length > 0;
+
   const submit = handleSubmit((values) => {
+    if (values.daysOfWeek.length === 0) return;
     onSubmit({
       title: values.title.trim(),
       note: values.note.trim(),
+      daysOfWeek: values.daysOfWeek,
     });
-    onClose();
+    onClose(); // ← добавили закрытие после сабмита, как в RegularTaskFormSheet
   });
 
   return (
@@ -73,20 +82,14 @@ export const TaskFormSheet = ({
             <Controller
               control={control}
               name="title"
-              rules={{
-                required: true,
-                validate: (v) => v.trim().length > 0,
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              rules={{ validate: (v) => v.trim().length > 0 }}
+              render={({ field: { onChange, value } }) => (
                 <TextInput
                   value={value}
                   onChangeText={onChange}
-                  onBlur={onBlur}
                   placeholder="Что нужно сделать?"
                   placeholderTextColor="#9CA3AF"
                   autoFocus
-                  returnKeyType="next"
-                  onSubmitEditing={() => noteRef.current?.focus()}
                   className="bg-surface text-foreground text-base px-4 py-3 rounded-xl"
                 />
               )}
@@ -94,16 +97,33 @@ export const TaskFormSheet = ({
           </View>
 
           <View>
+            <Text className="text-muted-foreground text-xs mb-1">
+              Повторять
+            </Text>
+            <Controller
+              control={control}
+              name="daysOfWeek"
+              rules={{ validate: (v) => v.length > 0 }}
+              render={({ field: { onChange, value } }) => (
+                <DayPicker value={value} onChange={onChange} />
+              )}
+            />
+            {!hasDays && (
+              <Text className="text-error text-xs mt-1.5">
+                Выберите хотя бы один день
+              </Text>
+            )}
+          </View>
+
+          <View>
             <Text className="text-muted-foreground text-xs mb-1">Заметка</Text>
             <Controller
               control={control}
               name="note"
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <TextInput
-                  ref={noteRef}
                   value={value}
                   onChangeText={onChange}
-                  onBlur={onBlur}
                   placeholder="Опционально..."
                   placeholderTextColor="#9CA3AF"
                   multiline
@@ -116,7 +136,7 @@ export const TaskFormSheet = ({
           </View>
         </View>
 
-        <View className=" flex-row gap-3 px-6 pb-2">
+        <View className="flex-row gap-3 px-4 pb-2">
           <View className="flex-1">
             <Button variant="ghost" onPress={onClose}>
               <ButtonText>Отмена</ButtonText>
@@ -127,7 +147,7 @@ export const TaskFormSheet = ({
               variant="solid"
               action="primary"
               onPress={submit}
-              className={!formState.isValid ? "opacity-50" : ""}
+              className={!formState.isValid || !hasDays ? "opacity-50" : ""}
             >
               <ButtonText>
                 {mode === "create" ? "Создать" : "Сохранить"}

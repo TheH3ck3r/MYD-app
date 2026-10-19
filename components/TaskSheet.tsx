@@ -7,13 +7,11 @@ import {
   PencilIcon,
   TrashIcon,
 } from "@/assets/icons";
-import { TaskItem, TaskStatus } from "@/types/tasks";
+import { TaskActionContext, TaskItem, TaskStatus } from "@/types/tasks";
 import { ActionSheet } from "@/ui/ActionSheet";
 import { Button, ButtonIcon, ButtonText } from "@/ui/Button";
 import { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
-
-export type TaskActionContext = "regular" | "daily";
 
 const STATUSES_BY_CONTEXT: Record<TaskActionContext, TaskStatus[]> = {
   regular: ["todo", "done", "failed", "paused"],

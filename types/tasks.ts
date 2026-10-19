@@ -6,6 +6,13 @@ export type DayState = "perfect" | "soft" | "failed" | "empty" | "unmarked";
 
 export type TaskActionContext = "regular" | "daily";
 
+export type TaskFormSheetMode = "create" | "edit";
+
+export type TaskFormState =
+  | { type: "create"; parentId: string | null }
+  | { type: "edit"; taskId: string }
+  | null;
+
 export type Task = {
   id: string;
   parentId: string | null;
@@ -39,27 +46,6 @@ export type TaskStatusChangeResult = {
   changes: TaskStatusChange[];
 };
 
-// export type RecurrenceRule =
-//   | { frequency: 'daily';   interval: number; startsAt: number; endsAt: number | null }
-//   | { frequency: 'weekly';  daysOfWeek: number[]; interval: number; startsAt: number; endsAt: number | null }
-//   | { frequency: 'monthly'; dayOfMonth: number; interval: number; startsAt: number; endsAt: number | null };
-
-// export type Completion = {
-//   id: string;
-//   taskId: string;
-//   day: string;
-//   status: TaskStatus;
-//   note: string | null;
-//   completedAt: number;
-// };
-
-// export type DaySummary = {
-//   day: string;
-//   scheduledCount: number;
-//   doneCount: number;
-//   failedCount: number;
-//   excusedCount: number;
-//   unmarkedCount: number;
-//   state: DayState;
-//   updatedAt: number;
-// };
+// daysOfWeek — числа в JS-конвенции: 0 = вс, 1 = пн, ..., 6 = сб.
+export type Recurrence =
+  { frequency: "daily" } | { frequency: "weekly"; daysOfWeek: number[] };

@@ -3,29 +3,22 @@ import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
 import { TaskList } from "@/components/TaskList";
-import { TaskItem, TaskStatus } from "@/types/tasks";
+import { TaskFormState, TaskItem, TaskStatus } from "@/types/tasks";
 import { MOCK_TASKS } from "../../constants/testData";
 import { AddTaskButton } from "@/components/AddTaskButton";
 import { TaskSheet } from "@/components/TaskSheet";
 import { tasksStore } from "@/stores/tasksStore";
-import { TaskFormSheet, TaskFormValues } from "@/components/TaskFormSheet";
-
-type FormState =
-  | { type: "create"; parentId: string | null }
-  | { type: "edit"; taskId: string }
-  | null;
+import {
+  RegularTaskFormSheet,
+  RegularTaskFormValues,
+} from "@/components/RegularTaskFormSheet";
 
 export default function TasksScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
-  const [formState, setFormState] = useState<FormState>(null);
+  const [formState, setFormState] = useState<TaskFormState>(null);
 
-  const openTask = openTaskId ? tasksStore.findTask(tasks, openTaskId) : null;
-
-  const formTask =
-    formState?.type === "edit"
-      ? tasksStore.findTask(tasks, formState.taskId)
-      : null;
+  const formTask = tasksStore.getFormTask(tasks, formState);
 
   const handleToggle = (id: string) => {
     const { tree } = tasksStore.toggle(tasks, id);
@@ -66,7 +59,7 @@ export default function TasksScreen() {
     tasksStore.deleteTask(tasks, taskId);
   };
 
-  const handleSubmit = (values: TaskFormValues) => {
+  const handleSubmit = (values: RegularTaskFormValues) => {
     if (!formState) return;
 
     if (formState.type === "create") {
@@ -94,7 +87,7 @@ export default function TasksScreen() {
 
       <TaskSheet
         visible={openTaskId !== null}
-        task={openTask}
+        task={tasksStore.openTask(tasks, openTaskId)}
         context="regular"
         onStatusChange={handleUpdateStatus}
         onEdit={handleEdit}
@@ -103,7 +96,7 @@ export default function TasksScreen() {
         onClose={() => setOpenTaskId(null)}
       />
 
-      <TaskFormSheet
+      <RegularTaskFormSheet
         visible={formState !== null}
         mode={formState?.type === "edit" ? "edit" : "create"}
         title={
@@ -115,7 +108,7 @@ export default function TasksScreen() {
         }
         initialValues={
           formTask
-            ? { title: formTask.title, note: "" /* TODO: task.note */ }
+            ? { title: formTask.title, note: formTask.note ?? "" }
             : undefined
         }
         onSubmit={() => handleSubmit}
