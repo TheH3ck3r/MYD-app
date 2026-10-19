@@ -1,3 +1,4 @@
+import { makeAutoObservable, runInAction } from "mobx";
 import {
   TaskFormState,
   TaskItem,
@@ -5,124 +6,142 @@ import {
   TaskStatusChange,
   TaskStatusChangeResult,
 } from "@/types/tasks";
-import { makeAutoObservable } from "mobx";
+import * as tasksService from "@/services/tasks";
 
 class TasksStore {
+  tasks: TaskItem[] = [];
+  loading = false;
+
   constructor() {
     makeAutoObservable(this);
   }
 
-  // ============================================================
-  // Статусы — публичное API
-  // ============================================================
+  // Публичные методы для работы с деревом
+  loadTasks = async () => {
+    this.loading = true;
+    try {
+      const data = await tasksService.getAllRegularTasks();
+      runInAction(() => {
+        this.tasks = data;
+      });
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
+  };
 
-  setTaskStatus(
-    tree: TaskItem[],
+  findTask = (id: string): TaskItem | null => {
+    const find = (items: TaskItem[]): TaskItem | null => {
+      for (const item of items) {
+        if (item.id === id) return item;
+        const found = find(item.children);
+        if (found) return found;
+      }
+      return null;
+    };
+    return find(this.tasks);
+  };
+
+  openTask = (openTaskId: string | null): TaskItem | null => {
+    return openTaskId ? this.findTask(openTaskId) : null;
+  };
+
+  getFormTask = (formState: TaskFormState): TaskItem | null => {
+    if (formState?.type !== "edit") return null;
+    return this.findTask(formState.taskId);
+  };
+
+  createTask = async (
+    parentId: string | null,
+    input: { title: string; note?: string },
+  ) => {
+    const id = this.generateId();
+    const title = input.title.trim();
+    const note = input.note?.trim() || null;
+
+    await tasksService.insertTask({ id, parentId, title, note });
+
+    runInAction(() => {
+      this.tasks = this.addTaskToTree(this.tasks, parentId, {
+        id,
+        title,
+        note,
+      });
+    });
+  };
+
+  updateTask = async (id: string, input: { title: string; note?: string }) => {
+    const title = input.title.trim();
+    const note = input.note?.trim() || null;
+
+    await tasksService.updateTaskFields(id, { title, note });
+
+    runInAction(() => {
+      this.tasks = this.transformTree(this.tasks, id, (node) => ({
+        ...node,
+        title,
+        note,
+      }));
+    });
+  };
+
+  deleteTask = async (id: string) => {
+    await tasksService.deleteTask(id);
+
+    runInAction(() => {
+      this.tasks = this.transformTree(
+        this.tasks,
+        id,
+        () => null,
+        (parent, newChildren) => this.aggregate(parent, newChildren),
+      );
+    });
+  };
+
+  setTaskStatus = async (
     id: string,
     status: TaskStatus,
-  ): TaskStatusChangeResult {
+  ): Promise<TaskStatusChangeResult> => {
     const changes: TaskStatusChange[] = [];
-
     const newTree = this.transformTree(
-      tree,
+      this.tasks,
       id,
       (node) => this.applyDown(node, status, changes, true),
       (parent, newChildren) => this.aggregate(parent, newChildren, changes),
     );
 
-    return { tree: newTree, changes };
-  }
+    runInAction(() => {
+      this.tasks = newTree;
+    });
 
-  toggle(tree: TaskItem[], id: string): TaskStatusChangeResult {
-    const task = this.findTask(tree, id);
-    if (!task) return { tree, changes: [] };
-
-    const next: TaskStatus = task.status === "todo" ? "done" : "todo";
-    return this.setTaskStatus(tree, id, next);
-  }
-
-  // ============================================================
-  // CRUD — публичное API
-  // ============================================================
-
-  addTask(
-    tree: TaskItem[],
-    parentId: string | null,
-    input: { title: string; note?: string },
-  ): TaskItem[] {
-    const newTask: TaskItem = {
-      id: this.generateId(),
-      title: input.title.trim(),
-      status: "todo",
-      note: input.note?.trim() || null,
-      children: [],
-    };
-
-    if (parentId === null) {
-      return [...tree, newTask];
+    for (const change of changes) {
+      await tasksService.updateTaskStatus(change.id, change.status);
     }
 
+    return { tree: newTree, changes };
+  };
+
+  toggle = async (id: string): Promise<TaskStatusChangeResult> => {
+    const task = this.findTask(id);
+    if (!task) return { tree: this.tasks, changes: [] };
+    const next: TaskStatus = task.status === "todo" ? "done" : "todo";
+    return this.setTaskStatus(id, next);
+  };
+
+  // Внутренние методы (без изменений, только для работы с деревом)
+  private addTaskToTree(
+    tree: TaskItem[],
+    parentId: string | null,
+    input: { id: string; title: string; note: string | null },
+  ): TaskItem[] {
+    const newTask: TaskItem = { ...input, status: "todo", children: [] };
+    if (parentId === null) return [...tree, newTask];
     return this.transformTree(tree, parentId, (parent) => ({
       ...parent,
       children: [...parent.children, newTask],
     }));
   }
-
-  updateTask(
-    tree: TaskItem[],
-    id: string,
-    input: { title?: string; note?: string },
-  ): TaskItem[] {
-    return this.transformTree(tree, id, (node) => {
-      const next = { ...node };
-
-      if (input.title !== undefined) {
-        next.title = input.title.trim();
-      }
-
-      if (input.note !== undefined) {
-        const trimmed = input.note.trim();
-        next.note = trimmed.length > 0 ? trimmed : null;
-      }
-
-      return next;
-    });
-  }
-
-  deleteTask(tree: TaskItem[], id: string): TaskItem[] {
-    return this.transformTree(
-      tree,
-      id,
-      () => null,
-      (parent, newChildren) => this.aggregate(parent, newChildren),
-    );
-  }
-
-  // ============================================================
-  // Вспомогательные функции — публичное API
-  // ============================================================
-
-  findTask(tasks: TaskItem[], id: string): TaskItem | null {
-    for (const item of tasks) {
-      if (item.id === id) return item;
-      const found = this.findTask(item.children, id);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  openTask(tasks: TaskItem[], openTaskId: string | null): TaskItem | null {
-    return openTaskId ? this.findTask(tasks, openTaskId) : null;
-  }
-
-  getFormTask(tasks: TaskItem[], formState: TaskFormState): TaskItem | null {
-    if (formState?.type !== "edit") return null;
-    return this.findTask(tasks, formState.taskId);
-  }
-
-  // ============================================================
-  // Обход дерева — внутреннее
-  // ============================================================
 
   private transformTree(
     items: TaskItem[],
@@ -132,16 +151,13 @@ class TasksStore {
   ): TaskItem[] {
     let anyChanged = false;
     const result: TaskItem[] = [];
-
     for (const item of items) {
       if (item.id === id) {
         const transformed = transformer(item);
         anyChanged = true;
-        if (transformed === null) continue;
-        result.push(transformed);
+        if (transformed !== null) result.push(transformed);
         continue;
       }
-
       if (item.children.length > 0) {
         const newChildren = this.transformTree(
           item.children,
@@ -159,16 +175,10 @@ class TasksStore {
           continue;
         }
       }
-
       result.push(item);
     }
-
     return anyChanged ? result : items;
   }
-
-  // ============================================================
-  // Логика статусов — внутреннее
-  // ============================================================
 
   private applyDown(
     item: TaskItem,
@@ -178,17 +188,13 @@ class TasksStore {
   ): TaskItem {
     const shouldChange = isTarget ? true : item.status === "todo";
     let changed = shouldChange && item.status !== status;
-
-    if (changed) {
+    if (changed)
       changes.push({ id: item.id, title: item.title, status, auto: false });
-    }
-
     const newChildren = item.children.map((child) => {
       const updated = this.applyDown(child, status, changes, false);
       if (updated !== child) changed = true;
       return updated;
     });
-
     if (!changed) return item;
     return {
       ...item,
@@ -202,33 +208,22 @@ class TasksStore {
     newChildren: TaskItem[],
     changes?: TaskStatusChange[],
   ): TaskItem {
-    if (newChildren.length === 0) {
-      return { ...item, children: newChildren };
-    }
-
+    if (newChildren.length === 0) return { ...item, children: newChildren };
     const first = newChildren[0].status;
     const allSame = newChildren.every((c) => c.status === first);
     const newStatus: TaskStatus = allSame ? first : "todo";
-
-    if (newStatus !== item.status) {
+    if (newStatus !== item.status)
       changes?.push({
         id: item.id,
         title: item.title,
         status: newStatus,
         auto: true,
       });
-    }
-
     return { ...item, status: newStatus, children: newChildren };
   }
 
-  // ============================================================
-  // Утилиты — внутреннее
-  // ============================================================
-
-  private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  }
+  private generateId = (): string =>
+    `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export const tasksStore = new TasksStore();

@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
 import { TaskList } from "@/components/TaskList";
-import { TaskFormState, TaskItem, TaskStatus } from "@/types/tasks";
+import { TaskFormState, TaskStatus } from "@/types/tasks";
 import { AddTaskButton } from "@/components/AddTaskButton";
 import { TaskSheet } from "@/components/TaskSheet";
 import { tasksStore } from "@/stores/tasksStore";
@@ -11,24 +11,25 @@ import {
   RegularTaskFormSheet,
   RegularTaskFormValues,
 } from "@/components/RegularTaskFormSheet";
-import { MOCK_TASKS } from "@/constants/testData";
+import { observer } from "mobx-react-lite";
 
-export default function TasksScreen() {
-  const [tasks, setTasks] = useState<TaskItem[]>(MOCK_TASKS);
+function TasksScreen() {
+  useEffect(() => {
+    tasksStore.loadTasks();
+  }, []);
+
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [formState, setFormState] = useState<TaskFormState>(null);
 
-  const formTask = tasksStore.getFormTask(tasks, formState);
+  const formTask = tasksStore.getFormTask(formState);
 
-  const handleToggle = (id: string) => {
-    const { tree } = tasksStore.toggle(tasks, id);
-    setTasks(tree);
+  const handleToggle = async (id: string) => {
+    await tasksStore.toggle(id);
   };
 
-  const handleUpdateStatus = (status: TaskStatus) => {
+  const handleUpdateStatus = async (status: TaskStatus) => {
     if (!openTaskId) return;
-    const { tree } = tasksStore.setTaskStatus(tasks, openTaskId, status);
-    setTasks(tree);
+    await tasksStore.setTaskStatus(openTaskId, status);
     setOpenTaskId(null);
   };
 
@@ -50,22 +51,27 @@ export default function TasksScreen() {
     setFormState({ type: "edit", taskId });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // TODO: Добавить модалку предупреждения
     if (!openTaskId) return;
     const taskId = openTaskId;
     setOpenTaskId(null);
-
-    tasksStore.deleteTask(tasks, taskId);
+    await tasksStore.deleteTask(taskId);
   };
 
-  const handleSubmit = (values: RegularTaskFormValues) => {
+  const handleSubmit = async (values: RegularTaskFormValues) => {
     if (!formState) return;
 
     if (formState.type === "create") {
-      tasksStore.addTask(tasks, formState.parentId, values);
+      await tasksStore.createTask(formState.parentId ?? null, {
+        title: values.title,
+        note: values.note,
+      });
     } else {
-      tasksStore.updateTask(tasks, formState.taskId, values);
+      await tasksStore.updateTask(formState.taskId, {
+        title: values.title,
+        note: values.note,
+      });
     }
 
     setFormState(null);
@@ -77,17 +83,17 @@ export default function TasksScreen() {
 
       <View className="flex-1">
         <TaskList
-          list={tasks}
-          onToggle={(id) => handleToggle(id)}
+          list={tasksStore.tasks}
+          onToggle={handleToggle}
           onPress={(id) => setOpenTaskId(id)}
         />
       </View>
 
-      <AddTaskButton onPress={() => handleAdd()} context={"regular"} />
+      <AddTaskButton onPress={handleAdd} context={"regular"} />
 
       <TaskSheet
         visible={openTaskId !== null}
-        task={tasksStore.openTask(tasks, openTaskId)}
+        task={tasksStore.openTask(openTaskId)}
         context="regular"
         onStatusChange={handleUpdateStatus}
         onEdit={handleEdit}
@@ -102,7 +108,7 @@ export default function TasksScreen() {
         title={
           formState?.type === "edit"
             ? "Редактировать задачу"
-            : formState?.parentId
+            : formState?.type === "create" && formState.parentId
               ? "Новая подзадача"
               : "Новая задача"
         }
@@ -111,9 +117,11 @@ export default function TasksScreen() {
             ? { title: formTask.title, note: formTask.note ?? "" }
             : undefined
         }
-        onSubmit={() => handleSubmit}
+        onSubmit={handleSubmit}
         onClose={() => setFormState(null)}
       />
     </SafeAreaView>
   );
 }
+
+export default observer(TasksScreen);

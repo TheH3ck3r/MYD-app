@@ -15,9 +15,17 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Notify } from "@/ui/Notify";
+
+import { getDb } from "@/db/client";
+import { useEffect } from "react";
+
 import "../global.css";
 
 export default function RootLayout() {
+  useEffect(() => {
+    getDb().then(() => console.log("БД готова к работе!"));
+  }, []);
+
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
