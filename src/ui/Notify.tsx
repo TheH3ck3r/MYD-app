@@ -1,4 +1,4 @@
-import { CrossIcon } from "@/assets/icons/CrossIcon";
+import { CrossIcon } from "../../assets/icons/CrossIcon";
 import { notifyStore, NotifyAction } from "@/stores/notifyStore";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";

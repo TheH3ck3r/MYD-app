@@ -1,5 +1,4 @@
-import { BoltIcon } from "@/assets/icons/BoltIcon";
-import { FireIcon } from "@/assets/icons/FireIcon";
+import { BoltIcon, FireIcon } from "@/assets/icons";
 import { ActionSheet } from "@/ui/ActionSheet";
 import { Text, View } from "react-native";
 

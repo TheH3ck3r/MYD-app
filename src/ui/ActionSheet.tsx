@@ -1,4 +1,4 @@
-import { CrossIcon } from "@/assets/icons";
+import { CrossIcon } from "../../assets/icons";
 import { ReactNode, useEffect, useState } from "react";
 import { LayoutChangeEvent, Modal, View, Text, Pressable } from "react-native";
 import Animated, {

@@ -15,9 +15,9 @@ const INDENT = 24;
 export const Task = memo(
   ({ item, depth = 0, onToggle, onPress }: TaskProps) => {
     return (
-      <View className="flex-col">
+      <View className="flex-col ">
         <View
-          className="flex-row justify-between py-2 px-4 gap-4"
+          className="flex-row justify-between py-2 px-4 gap-4 items-center"
           style={{ paddingLeft: depth * INDENT }}
         >
           <Pressable onPress={() => onPress(item.id)} className="flex-1">

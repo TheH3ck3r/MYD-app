@@ -13,7 +13,7 @@
         "./src/ui/*"
       ],
       "@/assets/*": [
-        "./src/assets/*"
+        "./assets/*"
       ],
       "@/constants/*": [
         "./src/constants/*"

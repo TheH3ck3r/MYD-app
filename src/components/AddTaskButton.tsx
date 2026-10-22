@@ -4,8 +4,8 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Pressable } from "react-native";
-import { AddIcon } from "@/assets/icons";
 import { TaskActionContext } from "@/types/tasks";
+import { AddIcon } from "@/assets/icons";
 
 type AddTaskButtonProps = {
   context: TaskActionContext;

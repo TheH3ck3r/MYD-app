@@ -1,4 +1,4 @@
-import { CheckIcon } from "@/assets/icons";
+import { CheckIcon } from "../../assets/icons";
 import { StreakSheet } from "@/components/StreakSheet";
 import { TopBar } from "@/components/TopBar";
 import { notifyStore } from "@/stores/notifyStore";

@@ -1,4 +1,4 @@
-import { CheckIcon, CrossIcon, DashIcon, PauseIcon } from "@/assets/icons";
+import { CheckIcon, CrossIcon, DashIcon, PauseIcon } from "../../assets/icons";
 import { TaskStatus } from "@/types/tasks";
 import { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
