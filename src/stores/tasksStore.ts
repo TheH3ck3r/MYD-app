@@ -7,7 +7,9 @@ import {
   TaskStatusChangeResult,
 } from "@/types/tasks";
 import * as tasksService from "@/services/tasks";
-import { notifyStore } from "./notifyStore";
+import { NotifyAction, notifyStore } from "./notifyStore";
+import { CheckIcon } from "@/assets/icons";
+import React from "react";
 
 class TasksStore {
   tasks: TaskItem[] = [];

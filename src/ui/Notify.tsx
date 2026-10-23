@@ -1,3 +1,4 @@
+import { AlertIcon, CheckIcon, DashIcon, InfoIcon } from "@/assets/icons";
 import { CrossIcon } from "../../assets/icons/CrossIcon";
 import { notifyStore, NotifyAction } from "@/stores/notifyStore";
 import { observer } from "mobx-react-lite";
@@ -17,6 +18,14 @@ const ACTION_STYLE: Record<NotifyAction, string> = {
   warning: "bg-secondary/15 border-secondary/40",
   error: "bg-error/15 border-error/40",
   muted: "bg-muted-foreground/10 border-muted-foreground/20",
+};
+
+const ACTION_ICON: Record<NotifyAction, React.ReactNode> = {
+  info: <InfoIcon size={16} color="#84DCC6" />,
+  success: <CheckIcon size={16} color="#84DCC6" />,
+  warning: <AlertIcon size={16} color="#FF4100" />,
+  error: <AlertIcon size={16} color="#FF5C5C" />,
+  muted: <DashIcon size={16} color="#9CA3AF" />,
 };
 
 export const Notify = observer(() => {
@@ -41,6 +50,8 @@ export const Notify = observer(() => {
 
   if (!current) return null;
 
+  const iconComponent = current.icon ?? ACTION_ICON[action];
+
   return (
     <Animated.View
       style={[animatedStyle, { bottom: insets.bottom + 100 }]}
@@ -50,9 +61,9 @@ export const Notify = observer(() => {
       <View
         className={`flex-row items-center gap-3 pl-4 pr-2 py-2 rounded-2xl border ${ACTION_STYLE[action]}`}
       >
-        {current.icon && (
+        {iconComponent && (
           <View className="w-5 h-5 items-center justify-center">
-            {current.icon}
+            {iconComponent}
           </View>
         )}
 
