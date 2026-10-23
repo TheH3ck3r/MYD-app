@@ -133,7 +133,7 @@ function TasksScreen() {
         message={
           tasksStore.findTask(taskToDeleteId || "")?.children.length
             ? "У этой задачи есть подзадачи. Они тоже будут удалены."
-            : "Это действие нельзя отменить."
+            : ""
         }
         onConfirm={confirmDelete}
         onCancel={() => setTaskToDeleteId(null)}

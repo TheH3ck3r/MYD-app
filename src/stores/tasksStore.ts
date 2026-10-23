@@ -7,6 +7,7 @@ import {
   TaskStatusChangeResult,
 } from "@/types/tasks";
 import * as tasksService from "@/services/tasks";
+import { notifyStore } from "./notifyStore";
 
 class TasksStore {
   tasks: TaskItem[] = [];
@@ -120,6 +121,8 @@ class TasksStore {
       await tasksService.updateTaskStatus(change.id, change.status);
     }
 
+    this.notifyAutoChanges(changes);
+
     return { tree: newTree, changes };
   };
 
@@ -223,8 +226,37 @@ class TasksStore {
     return { ...item, status: newStatus, children: newChildren };
   }
 
+  // Внутренние вспомогательные методы и уведомления
+
   private generateId = (): string =>
     `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  private notifyAutoChanges = (changes: TaskStatusChange[]) => {
+    const autoChanges = changes.filter((change) => change.auto);
+
+    const textMap: Record<TaskStatus, string> = {
+      done: "выполнена",
+      failed: "провалена :(",
+      excused: "пропущена",
+      paused: "отложена",
+      todo: "возвращена в работу",
+    };
+
+    const actionMap: Record<TaskStatus, any> = {
+      done: "success",
+      failed: "error",
+      excused: "muted",
+      paused: "muted",
+      todo: "info",
+    };
+
+    autoChanges.forEach((change) => {
+      notifyStore.show({
+        message: `Задача "${change.title}" ${textMap[change.status]}`,
+        action: actionMap[change.status],
+      });
+    });
+  };
 }
 
 export const tasksStore = new TasksStore();

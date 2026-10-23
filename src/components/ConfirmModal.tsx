@@ -36,14 +36,16 @@ export const ConfirmModal = ({
             <Text className="text-foreground text-lg font-semibold">
               {title}
             </Text>
-            <Text className="text-muted-foreground text-sm leading-5">
-              {message}
-            </Text>
+            {message && (
+              <Text className="text-muted-foreground text-sm leading-5">
+                {message}
+              </Text>
+            )}
           </View>
 
           <View className="flex-row gap-3 mt-2">
             <View className="flex-1">
-              <Button variant="ghost" onPress={onCancel}>
+              <Button variant="outline" onPress={onCancel}>
                 <ButtonText>{cancelText}</ButtonText>
               </Button>
             </View>
