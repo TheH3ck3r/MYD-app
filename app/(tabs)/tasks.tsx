@@ -12,6 +12,7 @@ import {
   RegularTaskFormValues,
 } from "@/components/RegularTaskFormSheet";
 import { observer } from "mobx-react-lite";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 function TasksScreen() {
   useEffect(() => {
@@ -20,6 +21,7 @@ function TasksScreen() {
 
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [formState, setFormState] = useState<TaskFormState>(null);
+  const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
 
   const formTask = tasksStore.getFormTask(formState);
 
@@ -51,12 +53,16 @@ function TasksScreen() {
     setFormState({ type: "edit", taskId });
   };
 
-  const handleDelete = async () => {
-    // TODO: Добавить модалку предупреждения
+  const handleDelete = () => {
     if (!openTaskId) return;
-    const taskId = openTaskId;
+    setTaskToDeleteId(openTaskId);
     setOpenTaskId(null);
-    await tasksStore.deleteTask(taskId);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDeleteId) return;
+    await tasksStore.deleteTask(taskToDeleteId);
+    setTaskToDeleteId(null);
   };
 
   const handleSubmit = async (values: RegularTaskFormValues) => {
@@ -89,8 +95,6 @@ function TasksScreen() {
         />
       </View>
 
-      <AddTaskButton onPress={handleAdd} context={"regular"} />
-
       <TaskSheet
         visible={openTaskId !== null}
         task={tasksStore.openTask(openTaskId)}
@@ -101,6 +105,8 @@ function TasksScreen() {
         onDelete={handleDelete}
         onClose={() => setOpenTaskId(null)}
       />
+
+      <AddTaskButton onPress={handleAdd} context={"regular"} />
 
       <RegularTaskFormSheet
         visible={formState !== null}
@@ -119,6 +125,18 @@ function TasksScreen() {
         }
         onSubmit={handleSubmit}
         onClose={() => setFormState(null)}
+      />
+
+      <ConfirmModal
+        visible={taskToDeleteId !== null}
+        title="Удалить задачу?"
+        message={
+          tasksStore.findTask(taskToDeleteId || "")?.children.length
+            ? "У этой задачи есть подзадачи. Они тоже будут удалены."
+            : "Это действие нельзя отменить."
+        }
+        onConfirm={confirmDelete}
+        onCancel={() => setTaskToDeleteId(null)}
       />
     </SafeAreaView>
   );
