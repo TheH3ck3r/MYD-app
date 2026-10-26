@@ -1,5 +1,6 @@
 export * from "./AddTaskButton";
 export * from "./ConfirmModal";
+export * from "./NoTasks";
 export * from "./Task";
 export * from "./TaskList";
 export * from "./TaskSheet";

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { observer } from "mobx-react-lite";
-import { ListIcon } from "@/assets/icons";
 import { tasksStore } from "@/stores/tasksStore";
 import {
   TopBar,
@@ -14,6 +13,7 @@ import {
   ConfirmModal,
 } from "@/components";
 import { TaskFormState, TaskStatus } from "@/types/tasks";
+import { NoTasks } from "@/components/NoTasks";
 
 function TasksScreen() {
   useEffect(() => {
@@ -90,17 +90,7 @@ function TasksScreen() {
 
       <View className="flex-1">
         {tasksStore.tasks.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-6 gap-4">
-            <View className="w-16 h-16 rounded-2xl bg-foreground items-center justify-center ">
-              <ListIcon size={32} color="#121417" />
-            </View>
-            <Text className="text-foreground text-lg font-medium text-center">
-              Пока нет задач
-            </Text>
-            <Text className="text-muted-foreground text-sm text-center">
-              Нажмите на кнопку «+» в правом нижнем углу, чтобы добавить первую!
-            </Text>
-          </View>
+          <NoTasks context="regular" />
         ) : (
           <TaskList
             list={tasksStore.tasks}
