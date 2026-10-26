@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar } from "@/components/TopBar";
-import { TaskList } from "@/components/TaskList";
-import { TaskFormState, TaskStatus } from "@/types/tasks";
-import { AddTaskButton } from "@/components/AddTaskButton";
-import { TaskSheet } from "@/components/TaskSheet";
+import { observer } from "mobx-react-lite";
+import { ListIcon } from "@/assets/icons";
 import { tasksStore } from "@/stores/tasksStore";
 import {
+  TopBar,
+  TaskList,
+  AddTaskButton,
+  TaskSheet,
   RegularTaskFormSheet,
   RegularTaskFormValues,
-} from "@/components/RegularTaskFormSheet";
-import { observer } from "mobx-react-lite";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { ListIcon } from "@/assets/icons";
+  ConfirmModal,
+} from "@/components";
+import { TaskFormState, TaskStatus } from "@/types/tasks";
 
 function TasksScreen() {
   useEffect(() => {

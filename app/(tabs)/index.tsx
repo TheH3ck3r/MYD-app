@@ -1,5 +1,5 @@
 import { CheckIcon } from "../../assets/icons";
-import { StreakSheet } from "@/components/StreakSheet";
+import { StreakSheet } from "@/components/daily/StreakSheet";
 import { TopBar } from "@/components/TopBar";
 import { notifyStore } from "@/stores/notifyStore";
 import { TaskFormState } from "@/types/tasks";
