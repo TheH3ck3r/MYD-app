@@ -1,4 +1,4 @@
-import { IconProps } from "@/src/types/icons";
+import { IconProps } from "@/types/icons";
 import Svg, { Path } from "react-native-svg";
 
 export const SettingsIcon = ({ size = 24, color = "white" }: IconProps) => (

@@ -9,5 +9,6 @@ export * from "./TopBar";
 export * from "./daily/DailyTaskFormSheet";
 export * from "./daily/DayPicker";
 export * from "./daily/StreakSheet";
+export * from "./daily/WeekCalendar";
 
 export * from "./regular/RegularTaskFormSheet";

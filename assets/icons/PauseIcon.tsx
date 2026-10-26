@@ -1,4 +1,4 @@
-import { IconProps } from "@/src/types/icons";
+import { IconProps } from "@/types/icons";
 import Animated, {
   useAnimatedProps,
   useSharedValue,

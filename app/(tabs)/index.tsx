@@ -1,17 +1,23 @@
-import { CheckIcon } from "../../assets/icons";
+import { WeekCalendar } from "@/components";
 import { StreakSheet } from "@/components/daily/StreakSheet";
 import { TopBar } from "@/components/TopBar";
-import { notifyStore } from "@/stores/notifyStore";
 import { TaskFormState } from "@/types/tasks";
-import { Button, ButtonText } from "@/ui/Button";
-import { useState } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import dayjs from "dayjs";
 
 export default function DailyScreen() {
   const [isStreakSheetOpen, setIsStreakSheetOpen] = useState<boolean>(false);
   const [formState, setFormState] = useState<TaskFormState>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs().format("YYYY-MM-DD"),
+  );
+
+  useEffect(() => {
+    console.log(selectedDate);
+  }, [selectedDate]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -22,23 +28,10 @@ export default function DailyScreen() {
         onStreakPress={() => setIsStreakSheetOpen(true)}
       />
 
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-muted-foreground">Скоро</Text>
-        <Button
-          variant="ghost"
-          align="start"
-          className="mx-2"
-          onPress={() => {
-            notifyStore.show({
-              icon: <CheckIcon size={16} color="#84DCC6" />,
-              message: 'Задача "..." выполнена',
-              action: "success",
-            });
-          }}
-        >
-          <ButtonText>test</ButtonText>
-        </Button>
-      </View>
+      <WeekCalendar
+        selectedDate={selectedDate}
+        onSelectDate={(date) => console.log(date)}
+      />
 
       <StreakSheet
         visible={isStreakSheetOpen}
