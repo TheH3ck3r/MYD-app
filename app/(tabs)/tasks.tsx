@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
 import { TaskList } from "@/components/TaskList";
@@ -13,6 +13,7 @@ import {
 } from "@/components/RegularTaskFormSheet";
 import { observer } from "mobx-react-lite";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { ListIcon } from "@/assets/icons";
 
 function TasksScreen() {
   useEffect(() => {
@@ -88,11 +89,25 @@ function TasksScreen() {
       <TopBar title={"Цели и задачи"} />
 
       <View className="flex-1">
-        <TaskList
-          list={tasksStore.tasks}
-          onToggle={handleToggle}
-          onPress={(id) => setOpenTaskId(id)}
-        />
+        {tasksStore.tasks.length === 0 ? (
+          <View className="flex-1 items-center justify-center px-6 gap-4">
+            <View className="w-16 h-16 rounded-2xl bg-foreground items-center justify-center ">
+              <ListIcon size={32} color="#121417" />
+            </View>
+            <Text className="text-foreground text-lg font-medium text-center">
+              Пока нет задач
+            </Text>
+            <Text className="text-muted-foreground text-sm text-center">
+              Нажмите на кнопку «+» в правом нижнем углу, чтобы добавить первую!
+            </Text>
+          </View>
+        ) : (
+          <TaskList
+            list={tasksStore.tasks}
+            onToggle={handleToggle}
+            onPress={(id) => setOpenTaskId(id)}
+          />
+        )}
       </View>
 
       <TaskSheet
