@@ -14,6 +14,7 @@ import {
 } from "@/components";
 import { TaskFormState, TaskStatus } from "@/types/tasks";
 import { NoTasks } from "@/components/NoTasks";
+import { Loader } from "@/ui/Loader";
 
 function TasksScreen() {
   useEffect(() => {
@@ -89,7 +90,9 @@ function TasksScreen() {
       <TopBar title={"Цели и задачи"} />
 
       <View className="flex-1">
-        {tasksStore.tasks.length === 0 ? (
+        {tasksStore.loading ? (
+          <Loader />
+        ) : tasksStore.tasks.length === 0 ? (
           <NoTasks context="regular" />
         ) : (
           <TaskList
