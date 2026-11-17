@@ -8,12 +8,19 @@ type TaskProps = {
   depth?: number;
   onToggle: (id: string) => void;
   onPress: (id: string) => void;
+  toggleDisabled?: boolean;
 };
 
 const INDENT = 24;
 
 export const Task = memo(
-  ({ item, depth = 0, onToggle, onPress }: TaskProps) => {
+  ({
+    item,
+    depth = 0,
+    onToggle,
+    onPress,
+    toggleDisabled = false,
+  }: TaskProps) => {
     return (
       <View className="flex-col">
         <View
@@ -26,7 +33,11 @@ export const Task = memo(
             </Text>
           </Pressable>
 
-          <Checkbox status={item.status} onPress={() => onToggle(item.id)} />
+          <Checkbox
+            status={item.status}
+            onPress={() => onToggle(item.id)}
+            disabled={toggleDisabled}
+          />
         </View>
 
         {item.children.map((child) => (
@@ -36,6 +47,7 @@ export const Task = memo(
             depth={depth + 1}
             onToggle={onToggle}
             onPress={onPress}
+            toggleDisabled={toggleDisabled}
           />
         ))}
       </View>

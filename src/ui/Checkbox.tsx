@@ -12,6 +12,7 @@ import Animated, {
 type CheckboxProps = {
   status: TaskStatus;
   onPress: () => void;
+  disabled?: boolean;
 };
 
 const STATUS_STYLE: Record<TaskStatus, { bg: string; border: string }> = {
@@ -24,7 +25,11 @@ const STATUS_STYLE: Record<TaskStatus, { bg: string; border: string }> = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export const Checkbox = ({ status, onPress }: CheckboxProps) => {
+export const Checkbox = ({
+  status,
+  onPress,
+  disabled = false,
+}: CheckboxProps) => {
   const checkProgress = useSharedValue(status === "done" ? 1 : 0);
   const crossProgress = useSharedValue(status === "failed" ? 1 : 0);
   const dashProgress = useSharedValue(status === "excused" ? 1 : 0);
@@ -61,6 +66,7 @@ export const Checkbox = ({ status, onPress }: CheckboxProps) => {
 
   return (
     <AnimatedPressable
+      disabled={disabled}
       onPress={onPress}
       onPressIn={() => {
         scale.value = withSpring(0.9, { damping: 50, stiffness: 500 });

@@ -1,169 +1,210 @@
-import { ChevronIcon } from "@/assets/icons/ChevronIcon";
+import { useState } from "react";
 import dayjs from "dayjs";
-import { memo, useRef, useState } from "react";
-import {
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { FlatList, Modal, Pressable, Text, View } from "react-native";
+import { dailyAnchorWeek, shiftDailyDate } from "@/utils/dailyRecurrence";
 
-type WeekCalendarProps = {
-  selectedDate: string; // формат 'YYYY-MM-DD'
-  onSelectDate: (date: string) => void;
-};
-
-const WEEKS_RANGE = 52;
-const WEEK_OFFSETS = Array.from(
-  { length: WEEKS_RANGE * 2 + 1 },
-  (_, i) => i - WEEKS_RANGE,
-);
-const CENTER_INDEX = WEEKS_RANGE;
-const DATE_FORMAT = "YYYY-MM-DD";
-
-type WeekRowProps = {
-  weekOffset: number;
-  width: number;
+type Props = {
   selectedDate: string;
   today: string;
   onSelectDate: (date: string) => void;
+  dayState?: (date: string) => "done" | "failed" | "excused" | "todo" | "empty";
 };
 
-const WeekRow = memo(
-  ({ weekOffset, width, selectedDate, today, onSelectDate }: WeekRowProps) => {
-    const start = dayjs().startOf("week").add(weekOffset, "week");
-    const days = Array.from({ length: 7 }, (_, i) => start.add(i, "day"));
-
-    return (
-      <View style={{ width }} className="flex-row gap-1.5 px-4">
-        {days.map((day) => {
-          const dateStr = day.format(DATE_FORMAT);
-          const isSelected = selectedDate === dateStr;
-          const isToday = today === dateStr;
-
-          return (
-            <Pressable
-              key={dateStr}
-              onPress={() => onSelectDate(dateStr)}
-              className={`flex-1 aspect-square items-center justify-center rounded-xl border ${
-                isSelected
-                  ? "bg-primary border-primary"
-                  : isToday
-                    ? "bg-surface border-primary"
-                    : "bg-surface border-transparent"
-              }`}
-            >
-              <Text
-                className={`text-base font-semibold ${
-                  isSelected ? "text-primary-foreground" : "text-foreground"
-                }`}
-              >
-                {day.format("dd")}
-              </Text>
-              <Text
-                className={`text-xs ${
-                  isSelected
-                    ? "text-primary-foreground/70"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {day.format("D")}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    );
-  },
-);
+const LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const WEEK_OFFSETS = [-1, 0, 1];
+const DOT = {
+  done: "bg-success",
+  failed: "bg-error",
+  excused: "bg-muted-foreground",
+  todo: "bg-primary",
+  empty: "bg-transparent",
+};
 
 export const WeekCalendar = ({
   selectedDate,
+  today,
   onSelectDate,
-}: WeekCalendarProps) => {
-  const { width } = useWindowDimensions();
-  const listRef = useRef<FlatList<number>>(null);
-  const [index, setIndex] = useState(CENTER_INDEX);
-
-  const today = dayjs().format(DATE_FORMAT);
-  const weekStart = dayjs()
-    .startOf("week")
-    .add(index - CENTER_INDEX, "week");
-
-  const goTo = (next: number) => {
-    if (next < 0 || next >= WEEK_OFFSETS.length) return;
-    setIndex(next);
-    listRef.current?.scrollToIndex({ index: next, animated: true });
+  dayState,
+}: Props) => {
+  const [open, setOpen] = useState(false);
+  const [month, setMonth] = useState(`${selectedDate.slice(0, 7)}-01`);
+  const [weekWidth, setWeekWidth] = useState(0);
+  const start = dailyAnchorWeek(selectedDate);
+  const gridStart = dailyAnchorWeek(month);
+  const choose = (date: string) => {
+    onSelectDate(date);
+    setOpen(false);
   };
 
-  const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+  const day = (date: string, compact: boolean) => {
+    const selected = date === selectedDate;
+    const current = date === today;
+    return (
+      <Pressable
+        key={date}
+        accessibilityLabel={dayjs(date).format("D MMMM YYYY")}
+        accessibilityState={{ selected }}
+        onPress={() => choose(date)}
+        style={compact ? { width: "14.2857%" } : { flex: 1 }}
+        className="items-center py-1"
+      >
+        <View
+          className={`h-10 w-10 items-center justify-center rounded-xl border ${selected ? "border-primary bg-primary" : current ? "border-primary bg-surface" : "border-transparent"}`}
+        >
+          <Text
+            className={
+              selected
+                ? "font-semibold text-primary-foreground"
+                : compact && date.slice(0, 7) !== month.slice(0, 7)
+                  ? "text-muted-foreground"
+                  : "text-foreground"
+            }
+          >
+            {Number(date.slice(8))}
+          </Text>
+        </View>
+        <View
+          className={`mt-1 h-1 w-1 rounded-full ${DOT[dayState?.(date) ?? "empty"]}`}
+        />
+      </Pressable>
+    );
   };
-
-  const isFirst = index === 0;
-  const isLast = index === WEEK_OFFSETS.length - 1;
 
   return (
-    <View className="py-2 border-b border-border/50">
-      <View className="mb-2 flex-row items-center justify-between px-4">
+    <View className="border-b border-border px-4 pb-3 pt-2">
+      <View className="mb-2 flex-row items-center justify-between">
         <Pressable
-          onPress={() => goTo(index - 1)}
-          disabled={isFirst}
-          hitSlop={12}
-          className={isFirst ? "opacity-30" : ""}
+          accessibilityLabel="Предыдущая неделя"
+          onPress={() => onSelectDate(shiftDailyDate(selectedDate, -7))}
+          className="px-3 py-2"
         >
-          <View style={{ transform: [{ rotate: "90deg" }] }}>
-            <ChevronIcon size={12} color="#9CA3AF" />
-          </View>
+          <Text className="text-xl text-foreground">‹</Text>
         </Pressable>
-
-        <Text className="text-foreground text-sm font-medium">
-          {weekStart.format("D MMM")} –{" "}
-          {weekStart.add(6, "day").format("D MMM")}
-        </Text>
-
         <Pressable
-          onPress={() => goTo(index + 1)}
-          disabled={isLast}
-          hitSlop={12}
-          className={isLast ? "opacity-30" : ""}
+          onPress={() => {
+            setMonth(`${selectedDate.slice(0, 7)}-01`);
+            setOpen(true);
+          }}
+          className="py-2"
         >
-          <View style={{ transform: [{ rotate: "-90deg" }] }}>
-            <ChevronIcon size={12} color="#9CA3AF" />
-          </View>
+          <Text className="text-sm font-semibold text-foreground">
+            {dayjs(selectedDate).format("MMMM YYYY")} ▾
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityLabel="Следующая неделя"
+          onPress={() => onSelectDate(shiftDailyDate(selectedDate, 7))}
+          className="px-3 py-2"
+        >
+          <Text className="text-xl text-foreground">›</Text>
         </Pressable>
       </View>
-
-      <FlatList
-        ref={listRef}
-        data={WEEK_OFFSETS}
-        keyExtractor={(offset) => String(offset)}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        initialScrollIndex={CENTER_INDEX}
-        getItemLayout={(_, i) => ({
-          length: width,
-          offset: width * i,
-          index: i,
-        })}
-        initialNumToRender={3}
-        windowSize={5}
-        extraData={selectedDate}
-        onMomentumScrollEnd={onMomentumEnd}
-        renderItem={({ item }) => (
-          <WeekRow
-            weekOffset={item}
-            width={width}
-            selectedDate={selectedDate}
-            today={today}
-            onSelectDate={onSelectDate}
+      <View className="flex-row">
+        {LABELS.map((label) => (
+          <Text
+            key={label}
+            className="flex-1 text-center text-xs text-muted-foreground"
+          >
+            {label}
+          </Text>
+        ))}
+      </View>
+      <View onLayout={(event) => setWeekWidth(event.nativeEvent.layout.width)}>
+        {weekWidth > 0 && (
+          <FlatList
+            // Recenter only after landing on a different week or resizing.
+            key={`${start}:${weekWidth}`}
+            data={WEEK_OFFSETS}
+            keyExtractor={(offset) => String(offset)}
+            horizontal
+            pagingEnabled
+            bounces={false}
+            showsHorizontalScrollIndicator={false}
+            initialScrollIndex={1}
+            initialNumToRender={3}
+            style={{ height: 56, flexGrow: 0 }}
+            getItemLayout={(_, index) => ({
+              length: weekWidth,
+              offset: weekWidth * index,
+              index,
+            })}
+            onMomentumScrollEnd={(event) => {
+              const index = Math.round(
+                event.nativeEvent.contentOffset.x / weekWidth,
+              );
+              if (index !== 1 && index >= 0 && index <= 2) {
+                onSelectDate(shiftDailyDate(selectedDate, (index - 1) * 7));
+              }
+            }}
+            renderItem={({ item: weekOffset }) => (
+              <View style={{ width: weekWidth }} className="flex-row">
+                {LABELS.map((_, index) =>
+                  day(shiftDailyDate(start, weekOffset * 7 + index), false),
+                )}
+              </View>
+            )}
           />
         )}
-      />
+      </View>
+      <Modal
+        transparent
+        visible={open}
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+      >
+        <View className="flex-1 justify-center bg-black/70 px-5">
+          <View className="rounded-3xl bg-background p-4">
+            <View className="mb-4 flex-row items-center justify-between">
+              <Pressable
+                accessibilityLabel="Предыдущий месяц"
+                onPress={() =>
+                  setMonth(
+                    dayjs(month).subtract(1, "month").format("YYYY-MM-DD"),
+                  )
+                }
+                className="p-3"
+              >
+                <Text className="text-xl text-foreground">‹</Text>
+              </Pressable>
+              <Text className="font-semibold text-foreground">
+                {dayjs(month).format("MMMM YYYY")}
+              </Text>
+              <Pressable
+                accessibilityLabel="Следующий месяц"
+                onPress={() =>
+                  setMonth(dayjs(month).add(1, "month").format("YYYY-MM-DD"))
+                }
+                className="p-3"
+              >
+                <Text className="text-xl text-foreground">›</Text>
+              </Pressable>
+            </View>
+            <View className="flex-row">
+              {LABELS.map((label) => (
+                <Text
+                  key={label}
+                  className="flex-1 text-center text-xs text-muted-foreground"
+                >
+                  {label}
+                </Text>
+              ))}
+            </View>
+            <View className="flex-row flex-wrap">
+              {Array.from({ length: 42 }, (_, index) =>
+                day(shiftDailyDate(gridStart, index), true),
+              )}
+            </View>
+            <View className="mt-4 flex-row justify-between">
+              <Pressable onPress={() => choose(today)} className="p-3">
+                <Text className="text-primary">Сегодня</Text>
+              </Pressable>
+              <Pressable onPress={() => setOpen(false)} className="p-3">
+                <Text className="text-muted-foreground">Закрыть</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

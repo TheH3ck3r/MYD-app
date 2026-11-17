@@ -10,11 +10,16 @@ import { AddIcon } from "@/assets/icons";
 type AddTaskButtonProps = {
   context: TaskActionContext;
   onPress: (context: TaskActionContext) => void;
+  disabled?: boolean;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export const AddTaskButton = ({ context, onPress }: AddTaskButtonProps) => {
+export const AddTaskButton = ({
+  context,
+  onPress,
+  disabled = false,
+}: AddTaskButtonProps) => {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -23,6 +28,7 @@ export const AddTaskButton = ({ context, onPress }: AddTaskButtonProps) => {
 
   return (
     <AnimatedPressable
+      disabled={disabled}
       onPress={() => onPress(context)}
       onPressIn={() => {
         scale.value = withSpring(0.95, { damping: 50, stiffness: 1000 });

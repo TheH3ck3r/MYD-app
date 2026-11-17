@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { observer } from "mobx-react-lite";
-import { tasksStore } from "@/stores/tasksStore";
+import { regularTasksStore } from "@/stores/regularTasksStore";
 import {
   TopBar,
   TaskList,
@@ -18,22 +18,22 @@ import { Loader } from "@/ui/Loader";
 
 function TasksScreen() {
   useEffect(() => {
-    tasksStore.loadTasks();
+    regularTasksStore.loadTasks();
   }, []);
 
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [formState, setFormState] = useState<TaskFormState>(null);
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
 
-  const formTask = tasksStore.getFormTask(formState);
+  const formTask = regularTasksStore.getFormTask(formState);
 
   const handleToggle = async (id: string) => {
-    await tasksStore.toggle(id);
+    await regularTasksStore.toggle(id);
   };
 
   const handleUpdateStatus = async (status: TaskStatus) => {
     if (!openTaskId) return;
-    await tasksStore.setTaskStatus(openTaskId, status);
+    await regularTasksStore.setTaskStatus(openTaskId, status);
     setOpenTaskId(null);
   };
 
@@ -63,7 +63,7 @@ function TasksScreen() {
 
   const confirmDelete = async () => {
     if (!taskToDeleteId) return;
-    await tasksStore.deleteTask(taskToDeleteId);
+    await regularTasksStore.deleteTask(taskToDeleteId);
     setTaskToDeleteId(null);
   };
 
@@ -71,12 +71,12 @@ function TasksScreen() {
     if (!formState) return;
 
     if (formState.type === "create") {
-      await tasksStore.createTask(formState.parentId ?? null, {
+      await regularTasksStore.createTask(formState.parentId ?? null, {
         title: values.title,
         note: values.note,
       });
     } else {
-      await tasksStore.updateTask(formState.taskId, {
+      await regularTasksStore.updateTask(formState.taskId, {
         title: values.title,
         note: values.note,
       });
@@ -90,13 +90,13 @@ function TasksScreen() {
       <TopBar title={"Цели и задачи"} />
 
       <View className="flex-1">
-        {tasksStore.loading ? (
+        {regularTasksStore.loading ? (
           <Loader />
-        ) : tasksStore.tasks.length === 0 ? (
+        ) : regularTasksStore.tasks.length === 0 ? (
           <NoTasks context="regular" />
         ) : (
           <TaskList
-            list={tasksStore.tasks}
+            list={regularTasksStore.tasks}
             onToggle={handleToggle}
             onPress={(id) => setOpenTaskId(id)}
           />
@@ -105,7 +105,7 @@ function TasksScreen() {
 
       <TaskSheet
         visible={openTaskId !== null}
-        task={tasksStore.openTask(openTaskId)}
+        task={regularTasksStore.openTask(openTaskId)}
         context="regular"
         onStatusChange={handleUpdateStatus}
         onEdit={handleEdit}
@@ -139,7 +139,7 @@ function TasksScreen() {
         visible={taskToDeleteId !== null}
         title="Удалить задачу?"
         message={
-          tasksStore.findTask(taskToDeleteId || "")?.children.length
+          regularTasksStore.findTask(taskToDeleteId || "")?.children.length
             ? "У этой задачи есть подзадачи. Они тоже будут удалены."
             : ""
         }

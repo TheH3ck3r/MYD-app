@@ -57,6 +57,7 @@ type ButtonProps = {
   align?: ButtonAlign;
   onPress?: () => void;
   className?: string;
+  disabled?: boolean;
 };
 
 export const Button = ({
@@ -67,12 +68,14 @@ export const Button = ({
   align = "center",
   onPress,
   className = "",
+  disabled = false,
 }: ButtonProps) => {
   const justify = align === "start" ? "justify-start" : "justify-center";
 
   return (
     <ButtonContext.Provider value={{ action, variant, size }}>
       <Pressable
+        disabled={disabled}
         onPress={onPress}
         className={`flex-row items-center gap-3 ${justify} ${CONTAINER_VARIANT[variant][action]} ${CONTAINER_SIZE[size]} active:opacity-60 ${className}`}
       >

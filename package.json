@@ -8,7 +8,8 @@
     "android": "bash scripts/dev-android.sh",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "node --import ./tests/register.mjs --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
     "dayjs": "^1.11.23",

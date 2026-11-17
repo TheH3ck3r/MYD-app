@@ -59,6 +59,12 @@ type TaskSheetProps = {
   onAddSubtask: () => void;
   onDelete: () => void;
   onClose: () => void;
+  readOnly?: boolean;
+  statusReadOnly?: boolean;
+  disabled?: boolean;
+  actionsAvailable?: boolean;
+  notice?: string;
+  error?: string | null;
 };
 
 export const TaskSheet = ({
@@ -70,11 +76,30 @@ export const TaskSheet = ({
   onAddSubtask,
   onDelete,
   onClose,
+  readOnly = false,
+  statusReadOnly = false,
+  disabled = false,
+  actionsAvailable = true,
+  notice,
+  error,
 }: TaskSheetProps) => {
   const statuses = STATUSES_BY_CONTEXT[context];
 
   return (
     <ActionSheet visible={visible} title={task?.title ?? ""} onClose={onClose}>
+      {!!notice && (
+        <Text className="mx-6 mb-3 text-sm leading-5 text-muted-foreground">
+          {notice}
+        </Text>
+      )}
+      {!!error && (
+        <Text
+          accessibilityRole="alert"
+          className="mx-6 mb-3 text-sm text-error"
+        >
+          {error}
+        </Text>
+      )}
       {!!task?.note && task.note.trim().length > 0 && (
         <View>
           <View className="mx-6 mb-2 -my-2 px-3 py-2 rounded-lg bg-surface">
@@ -93,6 +118,7 @@ export const TaskSheet = ({
         return (
           <Pressable
             key={status}
+            disabled={disabled || readOnly || statusReadOnly}
             onPress={() => onStatusChange(status)}
             className={`flex-row items-center gap-3 px-4 py-3 rounded-xl mx-2 active:opacity-60 ${
               active ? "bg-surface" : ""
@@ -113,41 +139,53 @@ export const TaskSheet = ({
         );
       })}
 
-      <View className="h-px bg-border mx-6 my-2" />
+      {!readOnly && actionsAvailable && (
+        <>
+          <View className="h-px bg-border mx-6 my-2" />
 
-      <View className="flex-col">
-        <Button
-          variant="ghost"
-          align="start"
-          className="mx-2"
-          onPress={onAddSubtask}
-        >
-          <ButtonIcon className="w-6 h-6">
-            <AddIcon size={24} color="#9CA3AF" />
-          </ButtonIcon>
-          <ButtonText>Добавить подзадачу</ButtonText>
-        </Button>
+          <View className="flex-col">
+            <Button
+              variant="ghost"
+              align="start"
+              className="mx-2"
+              onPress={onAddSubtask}
+              disabled={disabled}
+            >
+              <ButtonIcon className="w-6 h-6">
+                <AddIcon size={24} color="#9CA3AF" />
+              </ButtonIcon>
+              <ButtonText>Добавить подзадачу</ButtonText>
+            </Button>
 
-        <Button variant="ghost" align="start" className="mx-2" onPress={onEdit}>
-          <ButtonIcon className="w-6 h-6">
-            <PencilIcon size={16} color="#9CA3AF" />
-          </ButtonIcon>
-          <ButtonText>Редактировать</ButtonText>
-        </Button>
+            <Button
+              variant="ghost"
+              align="start"
+              className="mx-2"
+              onPress={onEdit}
+              disabled={disabled}
+            >
+              <ButtonIcon className="w-6 h-6">
+                <PencilIcon size={16} color="#9CA3AF" />
+              </ButtonIcon>
+              <ButtonText>Редактировать</ButtonText>
+            </Button>
 
-        <Button
-          variant="ghost"
-          action="destructive"
-          align="start"
-          className="mx-2"
-          onPress={onDelete}
-        >
-          <ButtonIcon className="w-6 h-6">
-            <TrashIcon size={20} color="#FF5C5C" />
-          </ButtonIcon>
-          <ButtonText>Удалить</ButtonText>
-        </Button>
-      </View>
+            <Button
+              variant="ghost"
+              action="destructive"
+              align="start"
+              className="mx-2"
+              onPress={onDelete}
+              disabled={disabled}
+            >
+              <ButtonIcon className="w-6 h-6">
+                <TrashIcon size={20} color="#FF5C5C" />
+              </ButtonIcon>
+              <ButtonText>Удалить</ButtonText>
+            </Button>
+          </View>
+        </>
+      )}
     </ActionSheet>
   );
 };

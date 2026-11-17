@@ -1,160 +1,320 @@
-import { ActionSheet } from "@/ui/ActionSheet";
-import { TaskFormSheetMode } from "@/types/tasks";
-import { useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { DayPicker } from "./DayPicker";
+import { ActionSheet } from "@/ui/ActionSheet";
 import { Button, ButtonText } from "@/ui/Button";
+import {
+  TaskFormActions,
+  TaskFormFields,
+  type TaskFormValues,
+} from "@/components/TaskFormFields";
+import { DayPicker } from "./DayPicker";
+import type { DailySchedule, DailyWeekday } from "@/types/dailyTasks";
+import {
+  dailyAnchorWeek,
+  validateDailyDate,
+  validateDailySchedule,
+} from "@/utils/dailyRecurrence";
 
-const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0];
+const INPUT = "bg-surface text-foreground text-base px-4 py-3 rounded-xl";
 
-export type DailyTaskFormValues = {
+type Props = {
   title: string;
-  note: string;
-  daysOfWeek: number[];
-};
-
-type DailyTaskFormSheetProps = {
-  visible: boolean;
-  mode: TaskFormSheetMode;
-  title: string;
-  initialValues?: Partial<DailyTaskFormValues>;
-  onSubmit: (values: DailyTaskFormValues) => void;
+  initialValues: TaskFormValues;
+  schedule?: DailySchedule;
+  parentTitle?: string;
+  creating: boolean;
+  effectiveTomorrow: boolean;
+  onSubmit: (fields: TaskFormValues, schedule?: DailySchedule) => Promise<void>;
   onClose: () => void;
 };
 
+// Each editor session mounts fresh; failed saves retain the entered fields.
 export const DailyTaskFormSheet = ({
-  visible,
-  mode,
   title,
   initialValues,
+  schedule,
+  parentTitle,
+  creating,
+  effectiveTomorrow,
   onSubmit,
   onClose,
-}: DailyTaskFormSheetProps) => {
-  const { control, handleSubmit, reset, watch, formState } =
-    useForm<DailyTaskFormValues>({
-      defaultValues: {
-        title: initialValues?.title ?? "",
-        note: initialValues?.note ?? "",
-        daysOfWeek: initialValues?.daysOfWeek ?? ALL_DAYS,
-      },
-    });
+}: Props) => {
+  const { control, handleSubmit, formState } = useForm<TaskFormValues>({
+    defaultValues: initialValues,
+  });
+  const { height } = useWindowDimensions();
+  const [expanded, setExpanded] = useState(false);
+  const [frequency, setFrequency] = useState<DailySchedule["frequency"]>(
+    schedule?.frequency ?? "weekly",
+  );
+  const [daysOfWeek, setDaysOfWeek] = useState<readonly DailyWeekday[]>(
+    schedule?.frequency === "weekly"
+      ? schedule.daysOfWeek
+      : [1, 2, 3, 4, 5, 6, 0],
+  );
+  const [interval, setInterval] = useState(
+    schedule?.frequency === "weekly" ? String(schedule.intervalWeeks) : "1",
+  );
+  const [monthlyDay, setMonthlyDay] = useState(
+    schedule?.frequency === "monthly"
+      ? String(schedule.dayOfMonth)
+      : (schedule?.startDate.slice(8) ?? "1"),
+  );
+  const [startDate, setStartDate] = useState(schedule?.startDate ?? "");
+  const [anchor, setAnchor] = useState(
+    schedule?.frequency === "weekly"
+      ? schedule.anchorWeekStart
+      : schedule
+        ? dailyAnchorWeek(schedule.startDate)
+        : "",
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      reset({
-        title: initialValues?.title ?? "",
-        note: initialValues?.note ?? "",
-        daysOfWeek: initialValues?.daysOfWeek ?? ALL_DAYS,
-      });
+  const readSchedule = (): DailySchedule | undefined => {
+    if (!schedule) return undefined;
+    try {
+      validateDailyDate(startDate);
+    } catch {
+      throw new Error("Укажите существующую дату начала в формате ГГГГ-ММ-ДД");
     }
-  }, [visible, initialValues, reset]);
+    let result: DailySchedule;
+    if (frequency === "weekly") {
+      if (!daysOfWeek.length)
+        throw new Error("Выберите хотя бы один день недели");
+      if (
+        !/^\d+$/.test(interval) ||
+        !Number.isSafeInteger(Number(interval)) ||
+        Number(interval) < 1
+      )
+        throw new Error("Интервал в неделях должен быть целым числом от 1");
+      try {
+        if (dailyAnchorWeek(anchor) !== anchor) throw new Error("Not Monday");
+      } catch {
+        throw new Error(
+          "Опорная дата должна быть понедельником в формате ГГГГ-ММ-ДД",
+        );
+      }
+      result = {
+        frequency,
+        startDate,
+        daysOfWeek,
+        intervalWeeks: Number(interval),
+        anchorWeekStart: anchor,
+      };
+    } else {
+      if (
+        !/^\d+$/.test(monthlyDay) ||
+        Number(monthlyDay) < 1 ||
+        Number(monthlyDay) > 31
+      )
+        throw new Error("Укажите целое число месяца от 1 до 31");
+      result = { frequency, startDate, dayOfMonth: Number(monthlyDay) };
+    }
+    validateDailySchedule(result);
+    return result;
+  };
 
-  const days = watch("daysOfWeek");
-  const hasDays = days.length > 0;
-
-  const submit = handleSubmit((values) => {
-    if (values.daysOfWeek.length === 0) return;
-    onSubmit({
-      title: values.title.trim(),
-      note: values.note.trim(),
-      daysOfWeek: values.daysOfWeek,
-    });
-    onClose(); // ← добавили закрытие после сабмита, как в RegularTaskFormSheet
+  const submit = handleSubmit(async (values) => {
+    if (saving) return;
+    setError(null);
+    try {
+      const nextSchedule = readSchedule();
+      setSaving(true);
+      await onSubmit(
+        { title: values.title.trim(), note: values.note.trim() },
+        nextSchedule,
+      );
+      onClose();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Не удалось сохранить задачу",
+      );
+    } finally {
+      setSaving(false);
+    }
   });
 
+  const summary =
+    frequency === "weekly"
+      ? `Каждые ${interval} нед. · ${daysOfWeek.map((day) => ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"][day]).join(", ")}`
+      : `${monthlyDay}-го числа каждого месяца`;
+
   return (
-    <ActionSheet visible={visible} title={title} onClose={onClose}>
+    <ActionSheet
+      visible
+      title={title}
+      onClose={() => {
+        if (!saving) onClose();
+      }}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View className="px-6 pt-2 pb-4 gap-4">
-          <View>
-            <Text className="text-muted-foreground text-xs mb-1">
-              Заголовок
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={{ maxHeight: height * 0.55 }}
+        >
+          {effectiveTomorrow && (
+            <Text className="mx-6 mb-2 text-sm leading-5 text-muted-foreground">
+              Изменения вступят в силу завтра. Сегодняшняя задача и история
+              сохранятся.
             </Text>
-            <Controller
-              control={control}
-              name="title"
-              rules={{ validate: (v) => v.trim().length > 0 }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="Что нужно сделать?"
-                  placeholderTextColor="#9CA3AF"
-                  autoFocus
-                  className="bg-surface text-foreground text-base px-4 py-3 rounded-xl"
-                />
-              )}
-            />
-          </View>
-
-          <View>
-            <Text className="text-muted-foreground text-xs mb-1">
-              Повторять
-            </Text>
-            <Controller
-              control={control}
-              name="daysOfWeek"
-              rules={{ validate: (v) => v.length > 0 }}
-              render={({ field: { onChange, value } }) => (
-                <DayPicker value={value} onChange={onChange} />
-              )}
-            />
-            {!hasDays && (
-              <Text className="text-error text-xs mt-1.5">
-                Выберите хотя бы один день
-              </Text>
-            )}
-          </View>
-
-          <View>
-            <Text className="text-muted-foreground text-xs mb-1">Заметка</Text>
-            <Controller
-              control={control}
-              name="note"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="Опционально..."
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  numberOfLines={3}
-                  className="bg-surface text-foreground text-base px-4 py-3 rounded-xl min-h-[80px]"
-                  style={{ textAlignVertical: "top" }}
-                />
-              )}
-            />
-          </View>
-        </View>
-
-        <View className="flex-row gap-3 px-4 pb-2">
-          <View className="flex-1">
-            <Button variant="ghost" onPress={onClose}>
-              <ButtonText>Отмена</ButtonText>
-            </Button>
-          </View>
-          <View className="flex-1">
-            <Button
-              variant="solid"
-              action="primary"
-              onPress={submit}
-              className={!formState.isValid || !hasDays ? "opacity-50" : ""}
+          )}
+          {!!error && (
+            <Text
+              accessibilityRole="alert"
+              className="mx-6 mb-2 text-sm text-error"
             >
-              <ButtonText>
-                {mode === "create" ? "Создать" : "Сохранить"}
-              </ButtonText>
-            </Button>
-          </View>
-        </View>
+              {error}
+            </Text>
+          )}
+          <TaskFormFields control={control} disabled={saving} />
+          {schedule ? (
+            <View className="px-6 pb-4 gap-3">
+              <Button
+                variant="ghost"
+                align="start"
+                disabled={saving}
+                onPress={() => setExpanded(!expanded)}
+                className="px-0"
+              >
+                <ButtonText>
+                  {expanded ? "Скрыть расписание" : "Расписание"}
+                </ButtonText>
+              </Button>
+              <Text className="text-sm text-muted-foreground">{summary}</Text>
+              <Text className="text-xs leading-5 text-muted-foreground">
+                Общее расписание для задачи и всех её подзадач.
+              </Text>
+              {expanded && (
+                <>
+                  <View className="flex-row gap-2">
+                    <View className="flex-1">
+                      <Button
+                        variant={frequency === "weekly" ? "solid" : "ghost"}
+                        action="primary"
+                        disabled={saving}
+                        onPress={() => setFrequency("weekly")}
+                      >
+                        <ButtonText>По неделям</ButtonText>
+                      </Button>
+                    </View>
+                    <View className="flex-1">
+                      <Button
+                        variant={frequency === "monthly" ? "solid" : "ghost"}
+                        action="primary"
+                        disabled={saving}
+                        onPress={() => setFrequency("monthly")}
+                      >
+                        <ButtonText>По месяцам</ButtonText>
+                      </Button>
+                    </View>
+                  </View>
+                  {frequency === "weekly" ? (
+                    <>
+                      <View pointerEvents={saving ? "none" : "auto"}>
+                        <DayPicker
+                          value={[...daysOfWeek]}
+                          onChange={(days) =>
+                            setDaysOfWeek(
+                              days.filter(
+                                (day): day is DailyWeekday =>
+                                  day === 0 ||
+                                  day === 1 ||
+                                  day === 2 ||
+                                  day === 3 ||
+                                  day === 4 ||
+                                  day === 5 ||
+                                  day === 6,
+                              ),
+                            )
+                          }
+                        />
+                      </View>
+                      <Text className="text-xs text-muted-foreground">
+                        Повторять каждые N недель
+                      </Text>
+                      <TextInput
+                        accessibilityLabel="Интервал в неделях"
+                        value={interval}
+                        onChangeText={setInterval}
+                        editable={!saving}
+                        keyboardType="number-pad"
+                        className={INPUT}
+                      />
+                      <Text className="text-xs text-muted-foreground">
+                        Понедельник опорной недели · ГГГГ-ММ-ДД
+                      </Text>
+                      <TextInput
+                        accessibilityLabel="Опорная неделя"
+                        value={anchor}
+                        onChangeText={setAnchor}
+                        editable={!saving}
+                        maxLength={10}
+                        className={INPUT}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Text className="text-xs text-muted-foreground">
+                        Число месяца · от 1 до 31
+                      </Text>
+                      <TextInput
+                        accessibilityLabel="Число месяца"
+                        value={monthlyDay}
+                        onChangeText={setMonthlyDay}
+                        editable={!saving}
+                        keyboardType="number-pad"
+                        className={INPUT}
+                      />
+                      <Text className="text-xs leading-5 text-muted-foreground">
+                        Если такого числа нет, задача появится в последний день
+                        месяца.
+                      </Text>
+                    </>
+                  )}
+                  <Text className="text-xs text-muted-foreground">
+                    Начало расписания · ГГГГ-ММ-ДД
+                  </Text>
+                  <TextInput
+                    accessibilityLabel="Начало расписания"
+                    value={startDate}
+                    onChangeText={setStartDate}
+                    editable={!saving}
+                    maxLength={10}
+                    className={INPUT}
+                  />
+                </>
+              )}
+            </View>
+          ) : (
+            <View className="px-6 pb-4 gap-1">
+              <Text className="text-xs text-muted-foreground">
+                Расписание родительской задачи
+              </Text>
+              <Text className="text-sm text-foreground">{parentTitle}</Text>
+            </View>
+          )}
+        </ScrollView>
+        <TaskFormActions
+          creating={creating}
+          valid={formState.isValid}
+          saving={saving}
+          onClose={onClose}
+          onSubmit={() => {
+            void submit();
+          }}
+        />
       </KeyboardAvoidingView>
     </ActionSheet>
   );
