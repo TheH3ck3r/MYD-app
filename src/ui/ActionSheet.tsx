@@ -1,6 +1,13 @@
 import { CrossIcon } from "../../assets/icons";
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { LayoutChangeEvent, Modal, View, Text, Pressable } from "react-native";
+import {
+  KeyboardAvoidingView,
+  LayoutChangeEvent,
+  Modal,
+  View,
+  Text,
+  Pressable,
+} from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -76,6 +83,8 @@ export const ActionSheet = ({
   return (
     <Modal
       transparent
+      statusBarTranslucent
+      navigationBarTranslucent
       visible={mounted}
       animationType="none"
       onRequestClose={onClose}
@@ -87,25 +96,46 @@ export const ActionSheet = ({
         <Pressable className="flex-1" onPress={onClose} />
       </Animated.View>
 
-      <Animated.View
-        onLayout={handleLayout}
-        style={[sheetStyle, { paddingBottom: insets.bottom + 8 }]}
-        className="absolute bottom-0 left-0 right-0 bg-background rounded-t-3xl"
+      <KeyboardAvoidingView
+        behavior="padding"
+        pointerEvents="box-none"
+        style={{
+          flex: 1,
+          justifyContent: "flex-end",
+          paddingTop: insets.top + 16,
+        }}
       >
-        <View className="items-center pt-3 pb-2">
-          <View className="w-10 h-1 bg-border rounded-full" />
-        </View>
+        <Animated.View
+          onLayout={handleLayout}
+          style={[
+            sheetStyle,
+            {
+              paddingBottom: insets.bottom + 8,
+              flexShrink: 1,
+              maxHeight: "100%",
+            },
+          ]}
+          className="bg-background rounded-t-3xl"
+        >
+          <View className="items-center pt-3 pb-2">
+            <View className="w-10 h-1 bg-border rounded-full" />
+          </View>
 
-        <View className="flex-row justify-between items-center px-6 pt-2 pb-4">
-          <Text className="text-foreground text-lg font-semibold">{title}</Text>
+          <View className="flex-row justify-between items-center px-6 pt-2 pb-4">
+            <Text className="text-foreground text-lg font-semibold">
+              {title}
+            </Text>
 
-          <Pressable onPress={onClose}>
-            <CrossIcon size={20} />
-          </Pressable>
-        </View>
+            <Pressable onPress={onClose}>
+              <CrossIcon size={20} />
+            </Pressable>
+          </View>
 
-        <View className="px-2 pb-2">{children}</View>
-      </Animated.View>
+          <View style={{ flexShrink: 1 }} className="px-2 pb-2">
+            {children}
+          </View>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

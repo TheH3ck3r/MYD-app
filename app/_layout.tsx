@@ -12,6 +12,7 @@ dayjs.extend(weekday);
 dayjs.locale("ru");
 
 import { Stack } from "expo-router";
+import { DarkTheme, ThemeProvider } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Notify } from "@/ui/Notify";
@@ -28,11 +29,27 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-      <Notify />
+      <ThemeProvider
+        value={{
+          ...DarkTheme,
+          colors: {
+            ...DarkTheme.colors,
+            background: "#121417",
+            card: "#121417",
+          },
+        }}
+      >
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "#121417" },
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+        <Notify />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

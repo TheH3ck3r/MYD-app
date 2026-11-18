@@ -89,7 +89,7 @@ function TasksScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <TopBar title={"Цели и задачи"} />
 
       <View className="flex-1">

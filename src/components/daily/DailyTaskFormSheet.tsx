@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -161,12 +159,10 @@ export const DailyTaskFormSheet = ({
         if (!saving) setVisible(false);
       }}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <View style={{ flexShrink: 1 }}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          style={{ maxHeight: height * 0.55 }}
+          style={{ maxHeight: height * 0.55, flexShrink: 1 }}
         >
           {effectiveTomorrow && (
             <Text className="mx-6 mb-2 text-sm leading-5 text-muted-foreground">
@@ -319,7 +315,7 @@ export const DailyTaskFormSheet = ({
             void submit();
           }}
         />
-      </KeyboardAvoidingView>
+      </View>
     </ActionSheet>
   );
 };

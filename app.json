@@ -1,34 +1,37 @@
 {
-  "expo": {
-    "name": "MYD",
-    "slug": "myd-app",
-    "version": "1.0.0",
-    "icon": "./assets/images/icon.png",
-    "android": {
-      "package": "com.mikel.mydapp",
-      "versionCode": 1,
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
-    },
-    "ios": {
-      "bundleIdentifier": "com.mikel.mydapp"
-    },
-    "plugins": [
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        }
-      ],
-      "expo-sqlite",
-      "expo-sharing",
-      "expo-status-bar",
-      "./plugins/withAndroidReleaseSigning"
-    ]
-  }
+    "expo":  {
+                 "name":  "MYD",
+                 "slug":  "myd-app",
+                 "version":  "1.0.1",
+                 "icon":  "./assets/images/icon.png",
+                 "android":  {
+                                 "package":  "com.mikel.mydapp",
+                                 "versionCode":  2,
+                                 "adaptiveIcon":  {
+                                                      "foregroundImage":  "./assets/images/adaptive-icon.png",
+                                                      "backgroundColor":  "#ffffff"
+                                                  }
+                             },
+                 "ios":  {
+                             "bundleIdentifier":  "com.mikel.mydapp"
+                         },
+                 "plugins":  [
+                                 [
+                                     "expo-splash-screen",
+                                     {
+                                         "image":  "./assets/images/splash-icon.png",
+                                         "imageWidth":  200,
+                                         "resizeMode":  "contain",
+                                         "backgroundColor":  "#121417"
+                                     }
+                                 ],
+                                 "expo-sqlite",
+                                 "expo-sharing",
+                                 "expo-status-bar",
+                                 "./plugins/withAndroidReleaseSigning",
+                                 "./plugins/withAndroidAppearance"
+                             ],
+                 "userInterfaceStyle":  "dark",
+                 "backgroundColor":  "#121417"
+             }
 }

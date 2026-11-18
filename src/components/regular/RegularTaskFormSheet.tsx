@@ -2,7 +2,7 @@ import { TaskFormSheetMode } from "@/types/tasks";
 import { ActionSheet } from "@/ui/ActionSheet";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { KeyboardAvoidingView, Platform } from "react-native";
+import { ScrollView, View } from "react-native";
 import {
   TaskFormActions,
   TaskFormFields,
@@ -51,10 +51,13 @@ export const RegularTaskFormSheet = ({
 
   return (
     <ActionSheet visible={visible} title={title} onClose={onClose}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <TaskFormFields control={control} />
+      <View style={{ flexShrink: 1 }}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={{ flexShrink: 1 }}
+        >
+          <TaskFormFields control={control} />
+        </ScrollView>
         <TaskFormActions
           creating={mode === "create"}
           valid={formState.isValid}
@@ -63,7 +66,7 @@ export const RegularTaskFormSheet = ({
             void submit();
           }}
         />
-      </KeyboardAvoidingView>
+      </View>
     </ActionSheet>
   );
 };

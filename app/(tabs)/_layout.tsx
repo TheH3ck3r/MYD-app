@@ -1,18 +1,22 @@
 import { CalendarIcon, ListIcon, SettingsIcon } from "../../assets/icons";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: "#121417",
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
-          height: 64,
+          height: 64 + insets.bottom,
+          paddingBottom: insets.bottom,
         },
         tabBarIconStyle: {
           flex: 1,
