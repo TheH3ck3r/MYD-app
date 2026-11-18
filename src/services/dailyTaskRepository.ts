@@ -103,7 +103,7 @@ export class DailyTaskRepository {
 
   async readSnapshot(): Promise<DailySnapshot> {
     const tasks = await this.db.getAllAsync<TemplateRow>(
-      "SELECT id, created_on, deleted_from FROM daily_tasks ORDER BY created_at, id",
+      "SELECT id, created_on, COALESCE(stopped_from, deleted_from) AS deleted_from FROM daily_tasks ORDER BY created_at, id",
     );
     const revisions = await this.db.getAllAsync<RevisionRow>(
       "SELECT * FROM daily_task_revisions ORDER BY effective_from",
@@ -186,12 +186,21 @@ export class DailyTaskRepository {
   async endTemplate(taskId: string, deletedFrom: string): Promise<void> {
     validateDailyDate(deletedFrom);
     const result = await this.db.runAsync(
-      "UPDATE daily_tasks SET deleted_from = ? WHERE id = ? AND deleted_from IS NULL",
+      "UPDATE daily_tasks SET stopped_from = ? WHERE id = ? AND stopped_from IS NULL",
       deletedFrom,
       taskId,
     );
     if (result.changes !== 1)
       throw new Error("Daily template is already deleted or missing");
+  }
+
+  async removeOccurrencesFrom(taskId: string, date: string): Promise<void> {
+    validateDailyDate(date);
+    await this.db.runAsync(
+      "DELETE FROM daily_task_occurrences WHERE task_id = ? AND local_date >= ?",
+      taskId,
+      date,
+    );
   }
 
   async saveOccurrence(occurrence: DailyOccurrence): Promise<void> {
@@ -202,7 +211,7 @@ export class DailyTaskRepository {
     await this.db.runAsync(
       `INSERT INTO daily_task_occurrences (task_id, local_date, revision_id, tree_json, status, updated_at)
        VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT (task_id, local_date) DO UPDATE SET tree_json = excluded.tree_json, status = excluded.status, updated_at = excluded.updated_at`,
+       ON CONFLICT (task_id, local_date) DO UPDATE SET revision_id = excluded.revision_id, tree_json = excluded.tree_json, status = excluded.status, updated_at = excluded.updated_at`,
       occurrence.taskId,
       occurrence.localDate,
       occurrence.revisionId,

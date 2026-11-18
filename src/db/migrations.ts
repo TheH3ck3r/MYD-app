@@ -49,4 +49,12 @@ export const MIGRATIONS = [
       CREATE INDEX daily_occurrences_date ON daily_task_occurrences(local_date);
     `,
   },
+  {
+    version: 3,
+    sql: `
+      ALTER TABLE daily_tasks ADD COLUMN stopped_from TEXT
+        CHECK (stopped_from IS NULL OR
+          (length(stopped_from) = 10 AND stopped_from >= created_on));
+    `,
+  },
 ];

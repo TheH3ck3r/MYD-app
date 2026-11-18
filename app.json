@@ -2,11 +2,11 @@
     "expo":  {
                  "name":  "MYD",
                  "slug":  "myd-app",
-                 "version":  "1.0.1",
+                 "version":  "1.0.2",
                  "icon":  "./assets/images/icon.png",
                  "android":  {
                                  "package":  "com.mikel.mydapp",
-                                 "versionCode":  2,
+                                 "versionCode":  3,
                                  "adaptiveIcon":  {
                                                       "foregroundImage":  "./assets/images/adaptive-icon.png",
                                                       "backgroundColor":  "#ffffff"

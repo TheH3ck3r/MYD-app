@@ -83,3 +83,8 @@ export const deleteTask = async (id: string) => {
   const db = await getDb();
   await db.runAsync(`DELETE FROM tasks WHERE id = ?`, [id]);
 };
+
+export const deleteAllRegularTasks = async () => {
+  const db = await getDb();
+  await db.runAsync("DELETE FROM tasks WHERE kind = 'regular'");
+};

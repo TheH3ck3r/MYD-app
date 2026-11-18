@@ -39,11 +39,17 @@ MYD-app is a personal Android task-management app that helps its owner follow th
 - Every scheduled date has an independent outcome and independently tracked subtask statuses.
 - At the end of a local calendar day, any scheduled occurrence left unmarked (`todo`) is considered `failed`.
 - This rule must hold even if the app stayed closed for days; do not rely solely on a midnight timer.
-- Editing a recurring task affects future dates only, starting on the day after editing. Existing occurrences for the current and past days retain their original content and outcomes.
-- Deleting a recurring task prevents future appearances; historical tasks/occurrences and their subtasks remain readable.
-- Adding, editing, or deleting a subtask also takes effect tomorrow. Deleting a
-  subtask removes its future subtree, preserving its siblings, the root schedule,
-  and all current/past occurrence content and outcomes.
+- Title/note and tree changes apply today and on future dates. Existing node
+  outcomes are retained today; newly added nodes start as `todo`. Past content and
+  outcomes remain unchanged. Schedule changes apply starting tomorrow and do not
+  change whether the task is scheduled today.
+- Deleting a recurring task removes today's occurrence and prevents future
+  appearances. Earlier historical tasks/occurrences and subtasks remain readable.
+- Adding, editing, or deleting a subtask applies today. Subtask deletion removes
+  only its subtree, preserving siblings, the root schedule, and past history.
+- Settings offers separately confirmed bulk deletion for each domain. Regular
+  tasks and subtasks are permanently deleted. Daily deletion removes today's and
+  future tasks while preserving earlier history, revisions and streak results.
 
 ## Streaks: daily domain only (approved)
 
@@ -74,8 +80,9 @@ MYD-app is a personal Android task-management app that helps its owner follow th
   and the existing count without increasing it.
 - New schedules default to today. The user may choose a future start date;
   retroactive creation is unavailable. Weekly schedules require at least one day.
-- Edits and logical deletion take effect tomorrow, including when today's occurrence
-  has not been stored. Today's original schedule and tree remain available.
+- Text/tree changes and logical deletion take effect today, including for tasks
+  created today. Only schedule changes take effect tomorrow. This supersedes the
+  original tomorrow-only structural editing rule after APK device review.
 - The current day uses the device timezone. Stored date labels are never shifted
   when the timezone changes. Resolved persisted failures are not undone by moving
   the clock backward. See ADR-003 for the clock-rollback guard.

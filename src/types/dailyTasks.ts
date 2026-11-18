@@ -74,7 +74,7 @@ export type DailyTaskFormData = {
   schedule?: DailySchedule;
   parentTitle?: string;
   creating: boolean;
-  effectiveTomorrow: boolean;
+  editingExisting: boolean;
 };
 
 export type DailyTaskNotice =

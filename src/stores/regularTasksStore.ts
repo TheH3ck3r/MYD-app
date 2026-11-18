@@ -87,6 +87,13 @@ class RegularTasksStore {
     });
   };
 
+  deleteAllTasks = async () => {
+    await tasksService.deleteAllRegularTasks();
+    runInAction(() => {
+      this.tasks = [];
+    });
+  };
+
   deleteTask = async (id: string) => {
     await tasksService.deleteTask(id);
 

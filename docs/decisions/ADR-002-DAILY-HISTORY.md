@@ -5,9 +5,13 @@
 ## Behavioral decision
 
 - Each scheduled date represents an independent occurrence with its own status and subtask statuses.
-- Editing a Daily Task affects **tomorrow onward**, never past dates or today's occurrence.
+- Text/tree edits affect today onward; schedule changes affect tomorrow onward.
+  This updates the original tomorrow-only rule after APK review; see ADR-003.
+  Past occurrences remain immutable.
 - Historical title, note, tree structure, and outcomes remain as they were for the date.
 - Deletion stops future scheduling but retains historical occurrences and the schedule information needed to reconstruct past days when the app was closed.
+- Deletion now also removes today's occurrence. Migration v3 adds `stopped_from`
+  for same-day deletion while retaining v2 lifecycle metadata and history.
 
 ## Implemented storage model
 

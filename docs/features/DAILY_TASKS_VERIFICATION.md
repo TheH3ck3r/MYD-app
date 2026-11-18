@@ -6,8 +6,8 @@
 - Weekly recurrence with an explicit Monday anchor and N-week interval; monthly
   recurrence with last-day fallback. Creation defaults to today and all weekdays.
 - Nested subtask editing and independent dated task trees.
-- Tomorrow-effective edits and logical deletion, preserving today's tree even if
-  it had not been materialized. Missing historical dates reconstruct from revisions.
+- Today-effective text/tree edits and logical deletion; schedule changes remain
+  tomorrow-effective. Missing historical dates reconstruct from retained revisions.
 - Unmarked past outcomes resolve to failure. Explicit excused outcomes survive
   rollover. Future navigation never creates occurrence rows.
 - Weekly/monthly calendar navigation, date outcome markers, all-template management,
@@ -131,9 +131,9 @@ First-session checks:
    still in `todo`. Check `excused` and confirm `paused` is absent.
 4. Reopen the app. Today's marks and notes must remain. Select tomorrow: outcomes
    must start independently in `todo`, with status controls disabled.
-5. Edit the task via All Repetitions. Change title, note, tree and schedule. Today
-   must retain the old content/outcomes; tomorrow's preview must use the revision.
-6. Delete the repetition: today and past dates remain visible, tomorrow disappears.
+5. Edit the task via All Repetitions. Today's text/tree must update while existing
+   marks and today's scheduling stay unchanged; the new schedule starts tomorrow.
+6. Delete the repetition: today and tomorrow disappear, past dates remain visible.
 7. Create a weekly task every two weeks using the reference Monday. Navigate
    active/inactive weeks and confirm selected weekdays match.
 8. Create a monthly task for day 31. Preview April 30 and February 28/29 in future
@@ -194,14 +194,14 @@ Approved after the shared-list follow-up:
   an optional disabled flag; existing callers retain the enabled default.
 - Root forms include expandable recurrence controls; subtask forms only edit
   title/note and identify the root whose schedule they inherit.
-- Adding/editing a subtask or removing its subtree writes tomorrow's revision.
-  Today's outcomes, historical content, siblings and the root's schedule are
-  preserved. Targeted operations use the latest pending revision transactionally.
+- Adding/editing a subtask or removing its subtree now updates today's revision.
+  Existing marks, historical content, siblings and the root schedule are preserved.
+  Targeted operations also update a pending tomorrow revision transactionally.
 - All Repetitions renders the pending tree using the existing Task component,
   allowing a newly added child to receive another child before tomorrow. Its
   status controls are read-only; daily status marks remain on the day screen.
-- A subtask already removed from tomorrow's tree can still be marked today, but
-  its structural actions are unavailable and the menu explains why.
+- Legacy v2 deletions scheduled for tomorrow may still have today's recorded
+  node. New deletions remove the node today as well.
 
 Exact files changed in this follow-up:
 
@@ -233,8 +233,8 @@ Device checks using `bash scripts/dev-android.sh`:
    actions should match, with the expected domain-specific statuses.
 2. Create and edit a Regular task/subtask; verify keyboard focus, validation,
    prefilled values, cancel/save and unchanged existing data.
-3. Create a Daily root, open its menu, and add a child. Today stays unchanged;
-   All Repetitions and tomorrow's preview show the child.
+3. Create a Daily root, open its menu, and add a child. The child must immediately
+   appear today, in All Repetitions and tomorrow's preview.
 4. From All Repetitions, open that child, add a nested child, then edit its title
    and note. All edits must remain in the pending tree; the form must identify
    the inherited root schedule and expose no independent schedule controls.
@@ -307,3 +307,63 @@ changes into already recorded later history are rejected.
 
 Remaining work is developer device acceptance, addressing observed UX/native
 issues, validating backup recovery, and then separately preparing an Android APK.
+
+## APK follow-up: same-day Daily edits and settings cleanup
+
+The developer approved replacing tomorrow-only structural changes with same-day
+text/tree changes and deletion. Schedule changes still start tomorrow. Settings
+uses the existing Button and ConfirmModal, with orchestration in settingsStore;
+the screen contains only composition and handle-prefixed event handlers.
+
+Migration v3 adds nullable `daily_tasks.stopped_from`; no tables or historical
+rows are rebuilt. Current occurrence removal and logical template termination run
+atomically. Regular cleanup is a separate single-statement cascading delete.
+
+Automated coverage includes v2-to-v3 upgrade, same-day creation/edit/deletion,
+retained historical revisions and virtual history, existing statuses, future
+schedule edits, unscheduled days, atomic rollback, bulk cleanup, streak preservation,
+Regular isolation, cancellation, duplicate confirmation prevention and retry.
+
+On the phone after installing the next APK over the current app:
+
+1. Add a Daily child and nested child today; edit their text immediately and restart.
+2. Delete a child with descendants: the root and siblings stay today and tomorrow.
+3. Delete a root: its complete tree disappears today, tomorrow and All Repetitions;
+   prior days retain the full historical tree and statuses.
+4. Change a root schedule: today's scheduling stays intact, tomorrow uses the change.
+5. Cancel both Settings confirmations and verify no changes. Confirm Regular cleanup
+   on disposable tasks; Daily must remain unchanged.
+6. Confirm Daily cleanup: today, future and All Repetitions become empty, while past
+   days and streak results remain. Restart to verify persistence.
+
+The agent does not build, install or launch the app; final native acceptance belongs
+to the developer. Existing app.json release-version changes are preserved.
+
+Verification outcome: `npx tsc --noEmit` passes; `npm test` passes all 55 tests;
+ESLint on the changed application files passes. Full `npm run lint` still reports
+the existing 6 errors and 10 warnings in shared UI/root-layout code. `git diff
+--check` passes. Native behavior has not been checked by the agent.
+
+Exact files changed in this milestone:
+
+- `app/(tabs)/settings.tsx`
+- `src/stores/settingsStore.ts` (new)
+- `src/stores/dailyTasksStore.ts`
+- `src/stores/regularTasksStore.ts`
+- `src/services/dailyTaskService.ts`
+- `src/services/dailyTaskRepository.ts`
+- `src/services/tasks.ts`
+- `src/db/migrations.ts` (new forward migration v3)
+- `src/types/dailyTasks.ts`
+- `src/components/daily/DailyTaskFormSheet.tsx`
+- `src/components/daily/DailyTaskSheet.tsx`
+- `tests/dailyService.test.mjs`
+- `tests/dailyMigrations.test.mjs`
+- `tests/dailyTasksStore.test.mjs`
+- `tests/taskCleanup.test.mjs` (new)
+- `docs/PRODUCT_RULES.md`
+- `docs/features/DAILY_TASKS.md`
+- `docs/features/DAILY_TASKS_IMPLEMENTATION_PLAN.md`
+- `docs/features/DAILY_TASKS_VERIFICATION.md`
+- `docs/decisions/ADR-002-DAILY-HISTORY.md`
+- `docs/decisions/ADR-003-DAILY-STATUS-AND-CALENDAR.md`

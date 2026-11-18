@@ -5,6 +5,7 @@ import { DailyTaskRepository } from "../src/services/dailyTaskRepository.ts";
 import { DailyTaskService } from "../src/services/dailyTaskService.ts";
 import { resolveDailyDay } from "../src/utils/dailyHistory.ts";
 import { openTestDatabase } from "./sqliteAdapter.mjs";
+import { calculateDailyStreaks } from "../src/utils/dailyStreaks.ts";
 
 const initial = () => ({
   schedule: {
@@ -49,7 +50,155 @@ const fixture = async () => {
   };
 };
 
-test("subtask edits use tomorrow's revision without changing today's outcomes or siblings", async () => {
+test("a newly created repetition can be nested, edited and deleted on the same day", async () => {
+  const { db, service } = await fixture();
+  try {
+    await service.create(initial());
+    const added = await service.addSubtask("root", "child", {
+      title: "New nested",
+      note: "",
+    });
+    const nested = resolveDailyDay(added, "2026-01-01", "2026-01-01")[0].tree
+      .children[0].children[0];
+    const edited = await service.editNode("root", nested.id, {
+      title: "Edited immediately",
+      note: "",
+    });
+    assert.equal(
+      resolveDailyDay(edited, "2026-01-01", "2026-01-01")[0].tree.children[0]
+        .children[0].title,
+      "Edited immediately",
+    );
+    await service.delete("root");
+    const reopened = await service.load();
+    assert.equal(
+      resolveDailyDay(reopened, "2026-01-01", "2026-01-01").length,
+      0,
+    );
+    assert.equal(reopened.templates[0].deletedFrom, "2026-01-01");
+    assert.deepEqual(await db.getAllAsync("PRAGMA foreign_key_check"), []);
+  } finally {
+    db.close();
+  }
+});
+
+test("editing an unscheduled task updates future content without creating a task today", async () => {
+  const { db, service } = await fixture();
+  try {
+    await service.create({
+      ...initial(),
+      schedule: { ...initial().schedule, startDate: "2026-01-05" },
+    });
+    await service.addSubtask("root", "child", {
+      title: "Future nested",
+      note: "",
+    });
+    const snapshot = await service.editNode("root", "child", {
+      title: "Future edit",
+      note: "",
+    });
+    assert.equal(
+      resolveDailyDay(snapshot, "2026-01-01", "2026-01-01").length,
+      0,
+    );
+    assert.equal(snapshot.occurrences.length, 0);
+    const future = resolveDailyDay(snapshot, "2026-01-05", "2026-01-01")[0];
+    assert.equal(future.tree.children[0].title, "Future edit");
+    assert.equal(future.tree.children[0].children[0].title, "Future nested");
+  } finally {
+    db.close();
+  }
+});
+
+test("a failed current occurrence write rolls back today's and tomorrow's revisions together", async () => {
+  const { db, service, setDate } = await fixture();
+  try {
+    await service.create(initial());
+    setDate("2026-01-10");
+    const before = await service.load();
+    await db.execAsync(
+      "CREATE TRIGGER fail_current BEFORE INSERT ON daily_task_occurrences BEGIN SELECT RAISE(ABORT, 'Occurrence failure'); END",
+    );
+    await assert.rejects(
+      service.editNode(
+        "root",
+        "root",
+        { title: "Changed", note: "" },
+        { frequency: "monthly", dayOfMonth: 12, startDate: "2026-01-01" },
+      ),
+      /Occurrence failure/,
+    );
+    assert.deepEqual(await service.load(), before);
+  } finally {
+    db.close();
+  }
+});
+
+test("bulk Daily deletion preserves recorded and virtual history, streaks and Regular data", async () => {
+  const { db, service, setDate } = await fixture();
+  try {
+    await service.create(initial());
+    await service.setStatus("root", "root", "2026-01-01", "done");
+    setDate("2026-01-03");
+    await service.create({
+      ...initial(),
+      schedule: { ...initial().schedule, startDate: "2026-01-03" },
+      tree: { ...initial().tree, id: "second" },
+    });
+    await service.setStatus("root", "root", "2026-01-03", "excused");
+    await db.runAsync(
+      "INSERT INTO tasks (id, title, created_at, updated_at) VALUES ('regular', 'Keep', 1, 1)",
+    );
+    const before = await service.load();
+    const historical = ["2026-01-01", "2026-01-02"].map((date) =>
+      resolveDailyDay(before, date, "2026-01-03"),
+    );
+    await service.deleteAll();
+    const after = await service.load();
+    assert.deepEqual(
+      ["2026-01-01", "2026-01-02"].map((date) =>
+        resolveDailyDay(after, date, "2026-01-03"),
+      ),
+      historical,
+    );
+    assert.deepEqual(
+      calculateDailyStreaks(after, "2026-01-03"),
+      calculateDailyStreaks(before, "2026-01-03"),
+    );
+    assert.equal(resolveDailyDay(after, "2026-01-03", "2026-01-03").length, 0);
+    assert.equal(resolveDailyDay(after, "2026-01-04", "2026-01-03").length, 0);
+    assert.equal((await db.getAllAsync("SELECT * FROM tasks")).length, 1);
+    assert.deepEqual(
+      after.occurrences.map((item) => item.localDate),
+      ["2026-01-01"],
+    );
+    assert.deepEqual(await service.deleteAll(), after);
+  } finally {
+    db.close();
+  }
+});
+
+test("bulk deletion rolls back every template and occurrence when a later write fails", async () => {
+  const { db, service } = await fixture();
+  try {
+    await service.create(initial());
+    await service.create({
+      ...initial(),
+      tree: { ...initial().tree, id: "second" },
+    });
+    await service.setStatus("root", "root", "2026-01-01", "done");
+    const before = await service.load();
+    await db.execAsync(
+      "CREATE TRIGGER fail_bulk BEFORE UPDATE ON daily_tasks WHEN NEW.id = 'second' BEGIN SELECT RAISE(ABORT, 'Bulk failure'); END",
+    );
+    await assert.rejects(service.deleteAll(), /Bulk failure/);
+    assert.deepEqual(await service.load(), before);
+  } finally {
+    db.close();
+  }
+});
+
+test("subtask edits apply today and preserve marked outcomes and past content", async () => {
   const { db, service, setDate } = await fixture();
   try {
     await service.create(initial());
@@ -70,9 +219,9 @@ test("subtask edits use tomorrow's revision without changing today's outcomes or
       note: "",
     });
     const today = resolveDailyDay(renamed, "2026-01-10", "2026-01-10")[0].tree;
-    assert.equal(today.children[0].title, "Child");
+    assert.equal(today.children[0].title, "Renamed child");
     assert.equal(today.children[0].status, "done");
-    assert.equal(today.children[0].children.length, 0);
+    assert.equal(today.children[0].children[0].title, "Renamed nested");
     const tomorrow = resolveDailyDay(renamed, "2026-01-11", "2026-01-10")[0]
       .tree;
     assert.equal(tomorrow.children[0].title, "Renamed child");
@@ -116,7 +265,7 @@ test("root schedule editing moves the entire pending tree and retains earlier su
     });
     assert.equal(
       resolveDailyDay(snapshot, "2026-01-10", "2026-01-10")[0].tree.title,
-      "Original",
+      "New root",
     );
     assert.equal(
       resolveDailyDay(snapshot, "2026-01-11", "2026-01-10").length,
@@ -142,7 +291,7 @@ test("root schedule editing moves the entire pending tree and retains earlier su
   }
 });
 
-test("deleting a subtask removes only its future subtree, retaining root schedule and historical content", async () => {
+test("deleting a subtask removes its current and future subtree while retaining siblings and history", async () => {
   const { db, service, setDate } = await fixture();
   try {
     const input = initial();
@@ -165,7 +314,15 @@ test("deleting a subtask removes only its future subtree, retaining root schedul
     const snapshot = await service.deleteSubtask("root", "child");
     const today = resolveDailyDay(snapshot, "2026-01-10", "2026-01-10")[0];
     const tomorrow = resolveDailyDay(snapshot, "2026-01-11", "2026-01-10")[0];
-    assert.equal(today.tree.children[0].children[0].id, "nested");
+    assert.deepEqual(
+      today.tree.children.map((node) => node.id),
+      ["sibling"],
+    );
+    assert.equal(
+      resolveDailyDay(snapshot, "2026-01-09", "2026-01-10")[0].tree.children[0]
+        .children[0].id,
+      "nested",
+    );
     assert.deepEqual(
       tomorrow.tree.children.map((node) => node.id),
       ["sibling"],
@@ -239,7 +396,7 @@ test("structural edits reject blank titles and edits of deleted repetitions", as
   }
 });
 
-test("editing before any occurrence preserves today and unmaterialized past content", async () => {
+test("editing updates today while preserving unmaterialized history and delaying schedule changes", async () => {
   const { db, service, setDate } = await fixture();
   try {
     const input = initial();
@@ -264,8 +421,8 @@ test("editing before any occurrence preserves today and unmaterialized past cont
       "failed",
     );
     const today = resolveDailyDay(snapshot, "2026-01-10", "2026-01-10")[0];
-    assert.equal(today.tree.title, "Original");
-    assert.equal(today.tree.children.length, 1);
+    assert.equal(today.tree.title, "Changed");
+    assert.equal(today.tree.children.length, 0);
     assert.equal(
       resolveDailyDay(snapshot, "2026-01-11", "2026-01-10")[0].tree.title,
       "Changed",
@@ -275,7 +432,7 @@ test("editing before any occurrence preserves today and unmaterialized past cont
       0,
     );
     assert.equal(snapshot.occurrences.length, 1);
-    await service.setStatus("root", "child", "2026-01-10", "done");
+    await service.setStatus("root", "root", "2026-01-10", "done");
     setDate("2026-01-11");
     const next = await service.load();
     assert.equal(
@@ -291,37 +448,34 @@ test("editing before any occurrence preserves today and unmaterialized past cont
   }
 });
 
-test("deletion before any occurrence preserves today, history, and today's status operations", async () => {
+test("root deletion removes today and future with nested children but retains historical outcomes", async () => {
   const { db, service, setDate } = await fixture();
   try {
     await service.create(initial());
+    await service.setStatus("root", "child", "2026-01-01", "done");
     setDate("2026-01-10");
+    await service.setStatus("root", "root", "2026-01-10", "excused");
     const snapshot = await service.delete("root");
     assert.equal(
-      resolveDailyDay(snapshot, "2026-01-09", "2026-01-10")[0].tree.status,
-      "failed",
-    );
-    assert.equal(
-      resolveDailyDay(snapshot, "2026-01-10", "2026-01-10")[0].tree.title,
-      "Original",
+      resolveDailyDay(snapshot, "2026-01-10", "2026-01-10").length,
+      0,
     );
     assert.equal(
       resolveDailyDay(snapshot, "2026-01-11", "2026-01-10").length,
       0,
     );
-    const marked = await service.setStatus(
-      "root",
-      "root",
-      "2026-01-10",
-      "excused",
+    const historical = resolveDailyDay(snapshot, "2026-01-01", "2026-01-10")[0];
+    assert.equal(historical.tree.children[0].status, "done");
+    assert.equal(
+      resolveDailyDay(snapshot, "2026-01-09", "2026-01-10")[0].tree.status,
+      "failed",
     );
-    assert.equal(marked.occurrences[0].tree.status, "excused");
-    assert.equal(marked.occurrences[0].tree.children[0].status, "excused");
-    setDate("2026-01-12");
-    const reopened = await service.load();
-    assert.equal(reopened.occurrences[0].tree.status, "excused");
     await assert.rejects(
-      service.setStatus("root", "root", "2026-01-12", "done"),
+      service.setStatus("root", "root", "2026-01-10", "done"),
+    );
+    assert.deepEqual(
+      (await service.load()).occurrences.map((item) => item.localDate),
+      ["2026-01-01"],
     );
   } finally {
     db.close();

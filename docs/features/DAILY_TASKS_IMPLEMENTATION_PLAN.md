@@ -50,7 +50,8 @@ approval requests for that authorized work.
 ## Phase 4 — Create/edit/delete UI and nested subtasks
 
 - Connect existing Daily UI, form sheet, date picker, and calendar to Daily store.
-- Implement weekly/monthly recurrence form validation and revisions taking effect tomorrow.
+- Implement weekly/monthly recurrence validation. Under the revised approved
+  rules, schedule changes take effect tomorrow; text/tree changes apply today.
 - Preserve task history across edits/deletion.
 - **Before Daily subtask status implementation:** resolve and document status propagation and aggregation rules.
 

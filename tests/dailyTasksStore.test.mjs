@@ -79,6 +79,7 @@ const fixture = (snapshot = makeSnapshot()) => {
       "create",
       "update",
       "delete",
+      "deleteAll",
       "editNode",
       "addSubtask",
       "deleteSubtask",
@@ -133,7 +134,7 @@ test("store selects occurrence content separately from pending template and prep
   assert.equal(form.fields.title, "Tomorrow child");
   assert.equal(form.schedule, undefined);
   assert.equal(store.getFormData(form).parentTitle, "Tomorrow root");
-  assert.equal(store.getFormData(form).effectiveTomorrow, true);
+  assert.equal(store.getFormData(form).editingExisting, true);
   assert.equal(
     store.getEditForm({ taskId: "root", nodeId: "root" }).schedule.frequency,
     "weekly",

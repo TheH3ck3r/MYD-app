@@ -83,16 +83,15 @@ tree store and rejects `paused`.
 ## 5. Edit recurrence template
 
 - Editable content includes title, note, schedule, and subtask tree.
-- Edits apply starting the **next local calendar day**.
-- Do not alter existing occurrences or the selected current day's content/outcome.
+- Title/note and tree edits apply **today**; schedule changes apply **tomorrow**.
+- Preserve today's existing node statuses; new nodes start as `todo`.
 - Keep historical revisions so that dates without stored occurrence rows can still be reconstructed correctly.
-- Avoid changing an already recorded occurrence's child tree when a template tree is edited later.
+- Past recorded occurrences and virtual historical days retain their original trees.
 - The selected node's edit form changes that node's title and note. Root editing
   also permits changing the schedule for the entire tree. Changing one node must
-  preserve other pending edits for tomorrow.
-- New nested subtasks are added from the selected node's menu and take effect
-  tomorrow. The All Repetitions view exposes the latest pending tree so additional
-  nesting and editing can continue before it becomes today's tree.
+  preserve other edits, including a pending schedule change for tomorrow.
+- New nested subtasks are available today immediately after saving. All Repetitions
+  also supports editing tasks not scheduled today, without creating an unscheduled occurrence.
 
 ## 6. Delete recurrence template
 
@@ -100,11 +99,14 @@ tree store and rejects `paused`.
 - Preserve all past dated occurrences, including failures and excused days.
 - Keep the revisions and necessary metadata to reconstruct historical scheduled days never materialized while the app was closed.
 - Use logical deletion/effective end date rather than deleting historical rows via cascade.
-- Approved: preserve today's original occurrence even if not previously persisted;
-  deletion takes effect tomorrow.
-- Deleting a subtask removes that node and its descendants from tomorrow's revision,
+- Deletion takes effect today and removes today's stored occurrence, while retaining
+  all earlier history. Tasks created today can also be deleted today.
+- Deleting a subtask removes that node and its descendants today and on future dates,
   without deleting the root, changing its schedule, or removing siblings. The
   confirmation distinguishes deleting a repetition from deleting a subtask.
+- Settings bulk deletion uses ConfirmModal, stops every active repetition today
+  in one transaction, and preserves past history and streak results. Regular bulk
+  deletion is a separate domain operation.
 
 ## 7. Streak calculations
 

@@ -33,6 +33,7 @@ type DailyStoreService = Pick<
   | "load"
   | "create"
   | "update"
+  | "deleteAll"
   | "delete"
   | "editNode"
   | "addSubtask"
@@ -233,7 +234,7 @@ export class DailyTasksStore {
           : undefined,
     parentTitle: form.mode === "create" ? undefined : form.parentTitle,
     creating: form.mode !== "edit",
-    effectiveTomorrow: form.mode !== "create",
+    editingExisting: form.mode !== "create",
   });
 
   getDeleteConfirmation = (target: DailyTaskTarget | null) => {
@@ -241,8 +242,8 @@ export class DailyTasksStore {
     return {
       title: root ? "Удалить повторение?" : "Удалить подзадачу?",
       message: root
-        ? "Задача перестанет появляться с завтра. Сегодняшняя задача, прошлые результаты и подзадачи останутся в истории."
-        : "Подзадача и её вложенные подзадачи будут удалены с завтра. Сегодняшняя задача и история сохранятся. Расписание родителя не изменится.",
+        ? "Задача и её подзадачи будут удалены за сегодня и на будущие дни. История прошедших дней сохранится."
+        : "Подзадача и её вложенные подзадачи будут удалены за сегодня и на будущие дни. История прошедших дней сохранится. Расписание родителя не изменится.",
     };
   };
 
@@ -310,6 +311,7 @@ export class DailyTasksStore {
     this.mutate(() => this.service.create(input));
   update = (id: string, input: DailyTaskInput) =>
     this.mutate(() => this.service.update(id, input));
+  deleteAll = () => this.mutate(() => this.service.deleteAll());
   delete = (id: string) => this.mutate(() => this.service.delete(id));
   editNode = (
     taskId: string,

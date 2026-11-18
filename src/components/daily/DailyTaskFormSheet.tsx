@@ -46,7 +46,7 @@ export const DailyTaskFormSheet = ({
     schedule,
     parentTitle,
     creating,
-    effectiveTomorrow,
+    editingExisting,
   } = form;
   const { control, handleSubmit, formState } = useForm<TaskFormValues>({
     defaultValues: initialValues,
@@ -164,10 +164,10 @@ export const DailyTaskFormSheet = ({
           keyboardShouldPersistTaps="handled"
           style={{ maxHeight: height * 0.55, flexShrink: 1 }}
         >
-          {effectiveTomorrow && (
+          {editingExisting && (
             <Text className="mx-6 mb-2 text-sm leading-5 text-muted-foreground">
-              Изменения вступят в силу завтра. Сегодняшняя задача и история
-              сохранятся.
+              Текст и подзадачи изменятся сегодня. Изменения расписания вступят
+              в силу завтра. История прошедших дней сохранится.
             </Text>
           )}
           {!!error && (

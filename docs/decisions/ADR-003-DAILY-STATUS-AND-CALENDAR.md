@@ -27,9 +27,9 @@ current dates with stable stored date labels.
 - Empty days preserve both streaks without incrementing them.
 - Creation defaults to today and requires a nonempty weekly selection. The UI
   permits an explicit future start, but not retroactive creation.
-- Editing and deletion take effect tomorrow. Today's original occurrence is
-  materialized before a structural change when scheduled; unscheduled days remain
-  unscheduled. Historical revisions are retained even without occurrence rows.
+- After APK review, the developer approved applying text/tree edits and deletion
+  today. Only schedule changes take effect tomorrow. Unscheduled days remain
+  unscheduled; past revisions and outcomes remain intact even without occurrence rows.
 - Current dates use the device timezone; stored `YYYY-MM-DD` labels are immutable.
 
 ## Implementation choices
@@ -39,11 +39,23 @@ current dates with stable stored date labels.
 After device review, the developer approved using Regular's menu and form
 presentation for Daily, with a single root schedule inherited by all descendants.
 Only root editing exposes recurrence controls; child editing changes title/note.
-Node additions, edits, and subtree removal take effect tomorrow. Targeted edits
-read the latest revision within their transaction, so sequential edits do not
-replace other pending changes. All Repetitions exposes the pending tree for
-further nesting/editing before tomorrow. Regular business logic is unchanged;
+Node additions, edits, and subtree removal now take effect today. Targeted edits
+read the latest revision within their transaction and update both today's tree
+and a pending tomorrow revision when present. Today's schedule stays unchanged,
+and existing node statuses are retained. All Repetitions also exposes tasks not
+scheduled today. Regular status business logic is unchanged;
 only presentation fields and form actions are shared.
+
+### Same-day deletion and bulk cleanup
+
+Migration v3 adds nullable `stopped_from` with an inclusive creation-date check.
+The old v2 `deleted_from` column remains intact for compatibility; the repository
+reads `COALESCE(stopped_from, deleted_from)` as the domain deletion date. This
+avoids rebuilding tables or rewriting existing foreign-key references. New
+deletions set `stopped_from` to today and remove occurrences from today onward.
+Earlier occurrences and schedule revisions remain available for virtual history.
+Bulk Daily deletion runs in one transaction; Regular bulk deletion independently
+removes Regular rows and their cascading descendants. Both require ConfirmModal.
 
 ### Calendar safeguards
 

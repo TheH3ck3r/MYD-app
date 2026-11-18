@@ -4,9 +4,15 @@ import type {
   DailyTaskInput,
   DailyNodeFields,
   DailySchedule,
+  DailyTaskNode,
+  DailyTemplate,
 } from "../types/dailyTasks";
-import { finalizeDailyTree, resolveDailyDay } from "../utils/dailyHistory";
-import { changeDailyStatus } from "../utils/dailyStatus";
+import {
+  dailyRevisionOn,
+  finalizeDailyTree,
+  resolveDailyDay,
+} from "../utils/dailyHistory";
+import { changeDailyStatus, findDailyNode } from "../utils/dailyStatus";
 import { shiftDailyDate } from "../utils/dailyRecurrence";
 import type { DailyTaskRepository } from "./dailyTaskRepository";
 import { createDailyId } from "./dailyTaskRepository";
@@ -71,20 +77,16 @@ export class DailyTaskService {
     }
   }
 
-  private async protectToday(
-    repository: DailyTaskRepository,
-    taskId: string,
+  private requireEditable(
+    template: DailyTemplate,
+    snapshot: DailySnapshot,
     today: string,
-  ): Promise<string> {
-    const snapshot = await this.reconcile(repository, today);
-    const template = snapshot.templates.find((item) => item.id === taskId);
-    if (!template || template.deletedFrom)
-      throw new Error("Повторение уже удалено");
+  ): void {
     const tomorrow = shiftDailyDate(today, 1);
-    // Refuse edits into already recorded history after a device-clock rollback.
     if (
+      template.createdOn > today ||
       snapshot.occurrences.some(
-        (item) => item.taskId === taskId && item.localDate >= tomorrow,
+        (item) => item.taskId === template.id && item.localDate > today,
       ) ||
       template.revisions.some((item) => item.effectiveFrom > tomorrow)
     ) {
@@ -92,48 +94,60 @@ export class DailyTaskService {
         "Дата устройства изменилась. Верните корректную дату перед изменением повторения",
       );
     }
-    const occurrence = resolveDailyDay(snapshot, today, today).find(
-      (item) => item.taskId === taskId,
-    );
-    if (occurrence) await repository.saveOccurrence(occurrence);
-    return tomorrow;
   }
 
   update(taskId: string, input: DailyTaskInput): Promise<DailySnapshot> {
-    return this.run(async (repository) => {
-      const today = this.currentDate();
-      if (
-        input.schedule.frequency === "weekly" &&
-        input.schedule.daysOfWeek.length === 0
-      )
-        throw new Error("Выберите хотя бы один день недели");
-      const tomorrow = await this.protectToday(repository, taskId, today);
-      await repository.writeRevision(taskId, tomorrow, input);
-      return repository.readSnapshot();
-    });
+    return this.reviseTree(taskId, () => input, input.schedule);
   }
 
   private reviseTree(
     taskId: string,
     edit: (input: DailyTaskInput) => DailyTaskInput,
+    schedule?: DailySchedule,
   ): Promise<DailySnapshot> {
     return this.run(async (repository) => {
-      const tomorrow = await this.protectToday(
-        repository,
-        taskId,
-        this.currentDate(),
-      );
-      const snapshot = await repository.readSnapshot();
+      const today = this.currentDate();
+      const tomorrow = shiftDailyDate(today, 1);
+      const snapshot = await this.reconcile(repository, today);
       const template = snapshot.templates.find((item) => item.id === taskId);
-      const revision = template?.revisions[template.revisions.length - 1];
-      if (!revision) throw new Error("Повторение не найдено");
-      const input = edit({ tree: revision.tree, schedule: revision.schedule });
-      if (
-        input.schedule.frequency === "weekly" &&
-        input.schedule.daysOfWeek.length === 0
-      )
-        throw new Error("Выберите хотя бы один день недели");
-      await repository.writeRevision(taskId, tomorrow, input);
+      if (!template || template.deletedFrom)
+        throw new Error("Повторение уже удалено");
+      this.requireEditable(template, snapshot, today);
+      const current = dailyRevisionOn(template, today);
+      const latest = template.revisions[template.revisions.length - 1];
+      if (!current || !latest) throw new Error("Повторение не найдено");
+      const input = edit({ tree: latest.tree, schedule: latest.schedule });
+      const occurrence = resolveDailyDay(snapshot, today, today).find(
+        (item) => item.taskId === taskId,
+      );
+      await repository.writeRevision(taskId, today, {
+        tree: input.tree,
+        schedule: current.schedule,
+      });
+      if (schedule || latest.effectiveFrom === tomorrow) {
+        await repository.writeRevision(taskId, tomorrow, {
+          tree: input.tree,
+          schedule: schedule ?? latest.schedule,
+        });
+      }
+      if (occurrence) {
+        // Preserve existing outcomes while applying the edited shape and text today.
+        const retainStatuses = (node: DailyTaskNode): DailyTaskNode => ({
+          ...node,
+          status: findDailyNode(occurrence.tree, node.id)?.status ?? "todo",
+          children: node.children.map(retainStatuses),
+        });
+        const updated = await repository.readSnapshot();
+        const revision = updated.templates
+          .find((item) => item.id === taskId)
+          ?.revisions.find((item) => item.effectiveFrom === today);
+        if (!revision) throw new Error("Не удалось сохранить версию задачи");
+        await repository.saveOccurrence({
+          ...occurrence,
+          revisionId: revision.id,
+          tree: retainStatuses(input.tree),
+        });
+      }
       return repository.readSnapshot();
     });
   }
@@ -149,10 +163,14 @@ export class DailyTaskService {
         new Error("Расписание меняется только у родительской задачи"),
       );
     }
-    return this.reviseTree(taskId, (input) => ({
-      tree: editDailyNode(input.tree, nodeId, fields),
-      schedule: schedule ?? input.schedule,
-    }));
+    return this.reviseTree(
+      taskId,
+      (input) => ({
+        tree: editDailyNode(input.tree, nodeId, fields),
+        schedule: schedule ?? input.schedule,
+      }),
+      schedule,
+    );
   }
 
   addSubtask(
@@ -173,13 +191,33 @@ export class DailyTaskService {
     }));
   }
 
+  private async stopTemplates(
+    repository: DailyTaskRepository,
+    taskId?: string,
+  ): Promise<DailySnapshot> {
+    const today = this.currentDate();
+    const snapshot = await this.reconcile(repository, today);
+    const templates = snapshot.templates.filter(
+      (item) =>
+        (!taskId || item.id === taskId) &&
+        (!item.deletedFrom || item.deletedFrom > today),
+    );
+    if (taskId && !templates.length) throw new Error("Повторение уже удалено");
+    for (const template of templates)
+      this.requireEditable(template, snapshot, today);
+    for (const template of templates) {
+      await repository.endTemplate(template.id, today);
+      await repository.removeOccurrencesFrom(template.id, today);
+    }
+    return repository.readSnapshot();
+  }
+
   delete(taskId: string): Promise<DailySnapshot> {
-    return this.run(async (repository) => {
-      const today = this.currentDate();
-      const tomorrow = await this.protectToday(repository, taskId, today);
-      await repository.endTemplate(taskId, tomorrow);
-      return repository.readSnapshot();
-    });
+    return this.run((repository) => this.stopTemplates(repository, taskId));
+  }
+
+  deleteAll(): Promise<DailySnapshot> {
+    return this.run((repository) => this.stopTemplates(repository));
   }
 
   setStatus(
