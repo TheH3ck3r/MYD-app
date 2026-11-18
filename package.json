@@ -9,7 +9,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "node --import ./tests/register.mjs --experimental-strip-types --test tests/*.test.mjs"
+    "test": "node --import ./tests/register.mjs --experimental-strip-types --test tests/*.test.mjs",
+    "android:signing": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/create-android-keystore.ps1",
+    "android:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1"
   },
   "dependencies": {
     "dayjs": "^1.11.23",
