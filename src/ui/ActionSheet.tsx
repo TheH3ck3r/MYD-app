@@ -1,5 +1,5 @@
 import { CrossIcon } from "../../assets/icons";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { LayoutChangeEvent, Modal, View, Text, Pressable } from "react-native";
 import Animated, {
   Easing,
@@ -15,6 +15,7 @@ type ActionSheetProps = {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  onDismiss?: () => void;
 };
 
 export const ActionSheet = ({
@@ -22,9 +23,20 @@ export const ActionSheet = ({
   title,
   children,
   onClose,
+  onDismiss,
 }: ActionSheetProps) => {
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible);
+  const onDismissRef = useRef(onDismiss);
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  const finishClose = useCallback(() => {
+    setMounted(false);
+    onDismissRef.current?.();
+  }, []);
 
   const progress = useSharedValue(0);
   const sheetHeight = useSharedValue(0);
@@ -38,10 +50,10 @@ export const ActionSheet = ({
       });
     } else {
       progress.value = withTiming(0, { duration: 200 }, (finished) => {
-        if (finished) scheduleOnRN(setMounted, false);
+        if (finished) scheduleOnRN(finishClose);
       });
     }
-  }, [visible]);
+  }, [visible, progress, finishClose]);
 
   const handleLayout = (e: LayoutChangeEvent) => {
     sheetHeight.value = e.nativeEvent.layout.height;

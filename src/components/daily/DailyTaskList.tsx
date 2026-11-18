@@ -3,6 +3,15 @@ import { TaskList } from "@/components/TaskList";
 import type { TaskItem } from "@/types/tasks";
 import type { DailyDayTask, DailyTaskNode } from "@/types/dailyTasks";
 
+type DailyTaskListProps = {
+  tasks: DailyDayTask[];
+  onOpen: (taskId: string, nodeId: string) => void;
+  onToggle: (taskId: string, node: DailyTaskNode) => void;
+  readOnly: boolean;
+  busy: boolean;
+  header?: ReactNode;
+};
+
 export const DailyTaskList = ({
   tasks,
   onOpen,
@@ -10,14 +19,7 @@ export const DailyTaskList = ({
   readOnly,
   busy,
   header,
-}: {
-  tasks: DailyDayTask[];
-  onOpen: (taskId: string, nodeId: string) => void;
-  onToggle: (taskId: string, node: DailyTaskNode) => void;
-  readOnly: boolean;
-  busy: boolean;
-  header?: ReactNode;
-}) => {
+}: DailyTaskListProps) => {
   const nodes = new Map<string, { taskId: string; node: DailyTaskNode }>();
   const present = (taskId: string, node: DailyTaskNode): TaskItem => {
     // Scope presentation IDs to their occurrence without changing domain IDs.

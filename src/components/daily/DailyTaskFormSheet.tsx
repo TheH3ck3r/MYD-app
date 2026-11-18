@@ -17,7 +17,11 @@ import {
   type TaskFormValues,
 } from "@/components/TaskFormFields";
 import { DayPicker } from "./DayPicker";
-import type { DailySchedule, DailyWeekday } from "@/types/dailyTasks";
+import type {
+  DailySchedule,
+  DailyWeekday,
+  DailyTaskFormData,
+} from "@/types/dailyTasks";
 import {
   dailyAnchorWeek,
   validateDailyDate,
@@ -26,32 +30,31 @@ import {
 
 const INPUT = "bg-surface text-foreground text-base px-4 py-3 rounded-xl";
 
-type Props = {
-  title: string;
-  initialValues: TaskFormValues;
-  schedule?: DailySchedule;
-  parentTitle?: string;
-  creating: boolean;
-  effectiveTomorrow: boolean;
+type DailyTaskFormSheetProps = {
+  form: DailyTaskFormData;
   onSubmit: (fields: TaskFormValues, schedule?: DailySchedule) => Promise<void>;
   onClose: () => void;
 };
 
 // Each editor session mounts fresh; failed saves retain the entered fields.
 export const DailyTaskFormSheet = ({
-  title,
-  initialValues,
-  schedule,
-  parentTitle,
-  creating,
-  effectiveTomorrow,
+  form,
   onSubmit,
   onClose,
-}: Props) => {
+}: DailyTaskFormSheetProps) => {
+  const {
+    title,
+    initialValues,
+    schedule,
+    parentTitle,
+    creating,
+    effectiveTomorrow,
+  } = form;
   const { control, handleSubmit, formState } = useForm<TaskFormValues>({
     defaultValues: initialValues,
   });
   const { height } = useWindowDimensions();
+  const [visible, setVisible] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [frequency, setFrequency] = useState<DailySchedule["frequency"]>(
     schedule?.frequency ?? "weekly",
@@ -125,7 +128,7 @@ export const DailyTaskFormSheet = ({
   };
 
   const submit = handleSubmit(async (values) => {
-    if (saving) return;
+    if (saving || !visible) return;
     setError(null);
     try {
       const nextSchedule = readSchedule();
@@ -134,7 +137,7 @@ export const DailyTaskFormSheet = ({
         { title: values.title.trim(), note: values.note.trim() },
         nextSchedule,
       );
-      onClose();
+      setVisible(false);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Не удалось сохранить задачу",
@@ -151,10 +154,11 @@ export const DailyTaskFormSheet = ({
 
   return (
     <ActionSheet
-      visible
+      visible={visible}
       title={title}
+      onDismiss={onClose}
       onClose={() => {
-        if (!saving) onClose();
+        if (!saving) setVisible(false);
       }}
     >
       <KeyboardAvoidingView
@@ -310,7 +314,7 @@ export const DailyTaskFormSheet = ({
           creating={creating}
           valid={formState.isValid}
           saving={saving}
-          onClose={onClose}
+          onClose={() => setVisible(false)}
           onSubmit={() => {
             void submit();
           }}

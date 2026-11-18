@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { observer } from "mobx-react-lite";
 import { regularTasksStore } from "@/stores/regularTasksStore";
@@ -26,6 +26,9 @@ function TasksScreen() {
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
 
   const formTask = regularTasksStore.getFormTask(formState);
+  const completed = regularTasksStore.tasks.filter(
+    (task) => task.status === "done",
+  ).length;
 
   const handleToggle = async (id: string) => {
     await regularTasksStore.toggle(id);
@@ -90,6 +93,11 @@ function TasksScreen() {
       <TopBar title={"Цели и задачи"} />
 
       <View className="flex-1">
+        {!regularTasksStore.loading && (
+          <Text className="px-4 py-3 text-sm text-muted-foreground">
+            Выполнено {completed} из {regularTasksStore.tasks.length}
+          </Text>
+        )}
         {regularTasksStore.loading ? (
           <Loader />
         ) : regularTasksStore.tasks.length === 0 ? (

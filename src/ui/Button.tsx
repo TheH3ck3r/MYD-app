@@ -114,13 +114,12 @@ const TEXT_SIZE: Record<ButtonSize, string> = {
   lg: "text-lg",
 };
 
-export const ButtonText = ({
-  children,
-  className = "",
-}: {
+type ButtonTextProps = {
   children: ReactNode;
   className?: string;
-}) => {
+};
+
+export const ButtonText = ({ children, className = "" }: ButtonTextProps) => {
   const { action, variant, size } = useContext(ButtonContext);
   return (
     <Text
@@ -133,12 +132,11 @@ export const ButtonText = ({
 
 // --- ButtonIcon ---
 
-export const ButtonIcon = ({
-  children,
-  className = "",
-}: {
+type ButtonIconProps = {
   children: ReactNode;
   className?: string;
-}) => (
+};
+
+export const ButtonIcon = ({ children, className = "" }: ButtonIconProps) => (
   <View className={`items-center justify-center ${className}`}>{children}</View>
 );

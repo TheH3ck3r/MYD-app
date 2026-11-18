@@ -72,7 +72,7 @@ npx --no-install expo export --platform android --output-dir .expo/daily-smoke
 git diff --check
 ```
 
-- 34 tests pass, including real SQLite migrations, schema rollback, preservation
+- 43 tests pass, including real SQLite migrations, schema rollback, preservation
   of legacy Regular rows/cascades, database reopening, occurrence uniqueness,
   foreign keys, status restrictions, service transaction rollback, same-day
   edit/delete preservation, unmaterialized history, recurrence, and streak rules.
@@ -245,7 +245,56 @@ Device checks using `bash scripts/dev-android.sh`:
 7. Reopen the app, review today's marks and pending tree, then inspect a past
    date: structural/status writes must remain unavailable in history.
 
-## Current remaining limits and next milestone
+## Daily screen refactor — store orchestration and presentation components
+
+Approved by the developer after reviewing the file-by-file plan. The screen now
+contains local visibility/selection state, short `handle…` callbacks and component
+composition. Domain selectors, form preparation, save/delete dispatch, status
+validation/toggling, calendar markers and foreground observation live in the
+Daily store. Persistence remains behind the existing service/repository boundary.
+
+Three presentation components were extracted without changing their appearance:
+
+- `DailyTemplatesList`: pending repetition trees, schedules and deletion triggers;
+  it continues using the shared Task component.
+- `DailyDayHeader`: selected date, completion count, read-only notice and empty day.
+- `DailyTaskSheet`: Daily configuration of the shared TaskSheet, including notices
+  and action availability.
+
+The form receives prepared data and retains its local draft and closing animation.
+Form errors propagate to it; status/delete errors remain in store state. Current
+and pending tree selection, inherited schedules and effective dates are unchanged.
+
+Files changed in this refactor:
+
+- `app/(tabs)/index.tsx`
+- `src/stores/dailyTasksStore.ts`
+- `src/types/dailyTasks.ts`
+- `src/components/daily/DailyTaskFormSheet.tsx`
+- `src/components/daily/DailyTemplatesList.tsx` (new)
+- `src/components/daily/DailyDayHeader.tsx` (new)
+- `src/components/daily/DailyTaskSheet.tsx` (new)
+- `tests/dailyTasksStore.test.mjs` (new)
+- This document
+
+Earlier uncommitted UI/prop naming changes were preserved. This refactor does not
+modify Regular, services, repositories, schema, migrations, or dependencies.
+
+Verification: `npm test` passes 43 tests, including 9 new store tests. TypeScript,
+focused lint and diff whitespace checks pass. Full lint reports 6 existing errors
+and 9 warnings in previously identified shared/Regular files. Store tests inject
+the service, clock and foreground event source; native modules load on demand.
+Tests cover today versus pending content, deleted-node action availability,
+form routing, allowed statuses, error propagation, reactive selectors, day rollover,
+and subscription/timer disposal, including a late subscription after screen blur.
+
+The app was not launched by the agent. Using `bash scripts/dev-android.sh`, check
+initial loading, day/template switching, calendar markers, current/pending task
+menus, all three form modes, delete confirmation and animated form dismissal.
+Background/resume and moving between tabs must reload correctly without duplicate
+subscriptions. Native behavior and visual equivalence still require device review.
+
+## Remaining limits after refactoring
 
 Daily stores full JSON trees for immutable revisions and recorded occurrences.
 For the intended personal app this keeps related status updates atomic. Historical

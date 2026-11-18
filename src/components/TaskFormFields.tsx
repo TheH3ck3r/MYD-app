@@ -5,13 +5,15 @@ import { Button, ButtonText } from "@/ui/Button";
 
 export type TaskFormValues = { title: string; note: string };
 
+type TaskFormFieldsProps = {
+  control: Control<TaskFormValues>;
+  disabled?: boolean;
+};
+
 export const TaskFormFields = ({
   control,
   disabled = false,
-}: {
-  control: Control<TaskFormValues>;
-  disabled?: boolean;
-}) => {
+}: TaskFormFieldsProps) => {
   const noteRef = useRef<TextInput>(null);
   const { field: title } = useController({
     control,
@@ -57,19 +59,21 @@ export const TaskFormFields = ({
   );
 };
 
+type TaskFormActionsProps = {
+  onClose: () => void;
+  onSubmit: () => void;
+  creating: boolean;
+  valid: boolean;
+  saving?: boolean;
+};
+
 export const TaskFormActions = ({
   onClose,
   onSubmit,
   creating,
   valid,
   saving = false,
-}: {
-  onClose: () => void;
-  onSubmit: () => void;
-  creating: boolean;
-  valid: boolean;
-  saving?: boolean;
-}) => (
+}: TaskFormActionsProps) => (
   <View className="flex-row gap-3 px-6 pb-2">
     <View className="flex-1">
       <Button variant="ghost" disabled={saving} onPress={onClose}>

@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import { FlatList, Modal, Pressable, Text, View } from "react-native";
 import { dailyAnchorWeek, shiftDailyDate } from "@/utils/dailyRecurrence";
 
-type Props = {
+type WeekCalendarProps = {
   selectedDate: string;
   today: string;
   onSelectDate: (date: string) => void;
@@ -12,6 +12,10 @@ type Props = {
 
 const LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const WEEK_OFFSETS = [-1, 0, 1];
+const formatMonth = (date: string): string => {
+  const label = dayjs(date).format("MMMM YYYY");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
 const DOT = {
   done: "bg-success",
   failed: "bg-error",
@@ -25,7 +29,7 @@ export const WeekCalendar = ({
   today,
   onSelectDate,
   dayState,
-}: Props) => {
+}: WeekCalendarProps) => {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(`${selectedDate.slice(0, 7)}-01`);
   const [weekWidth, setWeekWidth] = useState(0);
@@ -88,7 +92,7 @@ export const WeekCalendar = ({
           className="py-2"
         >
           <Text className="text-sm font-semibold text-foreground">
-            {dayjs(selectedDate).format("MMMM YYYY")} ▾
+            {formatMonth(selectedDate)} ▾
           </Text>
         </Pressable>
         <Pressable
@@ -167,7 +171,7 @@ export const WeekCalendar = ({
                 <Text className="text-xl text-foreground">‹</Text>
               </Pressable>
               <Text className="font-semibold text-foreground">
-                {dayjs(month).format("MMMM YYYY")}
+                {formatMonth(month)}
               </Text>
               <Pressable
                 accessibilityLabel="Следующий месяц"

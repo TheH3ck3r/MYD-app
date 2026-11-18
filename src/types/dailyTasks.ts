@@ -52,6 +52,52 @@ export type DailyDayTask = DailyOccurrence & {
   schedule: DailySchedule;
 };
 
+export type DailyTaskTarget = { taskId: string; nodeId: string };
+
+export type DailyOpenedTask = DailyTaskTarget & { template?: boolean };
+
+export type DailyTaskFormState =
+  | { mode: "create"; input: DailyTaskInput }
+  | {
+      mode: "edit";
+      taskId: string;
+      nodeId: string;
+      fields: DailyNodeFields;
+      schedule?: DailySchedule;
+      parentTitle: string;
+    }
+  | { mode: "add"; taskId: string; parentId: string; parentTitle: string };
+
+export type DailyTaskFormData = {
+  title: string;
+  initialValues: DailyNodeFields;
+  schedule?: DailySchedule;
+  parentTitle?: string;
+  creating: boolean;
+  effectiveTomorrow: boolean;
+};
+
+export type DailyTaskNotice =
+  "template" | "history" | "deletedTemplate" | "deletedNode";
+
+export type DailyTaskDetails = {
+  task: DailyTaskNode | null;
+  readOnly: boolean;
+  statusReadOnly: boolean;
+  actionsAvailable: boolean;
+  notice: DailyTaskNotice | null;
+};
+
+export type DailyTemplateListItem = {
+  taskId: string;
+  tree: DailyTaskNode;
+  schedule: DailySchedule;
+  effectiveFrom: DailyLocalDate;
+};
+
+export type DailyDateMode = "today" | "history" | "future";
+export type DailyCalendarDayState = DailyStatus | "empty";
+
 export type DailySchedule = {
   startDate: DailyLocalDate;
 } & (
