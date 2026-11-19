@@ -1,5 +1,35 @@
 # Daily Tasks — implementation handoff
 
+## Full-tree streak follow-up
+
+Approved after APK review: Perfect and Active now inspect every node in scheduled
+Daily trees. Failed or unfinished parents/descendants break both streaks; excused
+nodes break Perfect. Active gains one for a completed day with only done/excused
+nodes and at least one done node. All-excused days bridge Active without adding
+one; empty days bridge both. Today remains excluded, and tree size never changes
+the number of days added.
+
+Counters are derived from historical snapshots on each calculation. No database
+migration or historical status rewrite is involved. Existing streaks can become
+shorter under the new rules; a done parent no longer hides failed descendants.
+Status propagation and Regular behavior remain unchanged.
+
+Files changed for this follow-up: `src/utils/dailyStreaks.ts`,
+`src/components/daily/StreakSheet.tsx`, `tests/dailyStreaks.test.mjs`,
+`docs/PRODUCT_RULES.md`, `docs/features/DAILY_TASKS.md`,
+`docs/decisions/ADR-003-DAILY-STATUS-AND-CALENDAR.md`, and this document.
+
+Validation: all 59 tests pass, including all 64 combinations of three nested node
+statuses, historical recalculation without mutation, descendant failures/excused
+outcomes, all-excused continuity, and exclusion of today's incomplete descendants.
+`npx tsc --noEmit` and ESLint on the three changed code/test files pass.
+
+On the next APK, verify the explanation sheet and a completed historical day
+containing a done root with a failed/excused descendant. Both streaks must respect
+every stored node. Today's status changes must not alter the counters before day
+rollover. The agent did not build or launch the application. The pre-existing
+deletion of `src/utils/recurrence.ts` was preserved.
+
 ## Implemented
 
 - Independent Daily types, repository, application service, store, and status rules.
@@ -12,7 +42,7 @@
   rollover. Future navigation never creates occurrence rows.
 - Weekly/monthly calendar navigation, date outcome markers, all-template management,
   today-only status operations, loading/error feedback, and persisted outcomes.
-- Perfect/Active streaks from completed root outcomes, neutral empty days and
+- Perfect/Active streaks from all completed-day tree nodes, neutral empty days and
   all-excused Active continuity. Today's incomplete day is excluded.
 
 ## Changed application files

@@ -4,7 +4,6 @@ export * from "./CalendarIcon";
 export * from "./CheckIcon";
 export * from "./CrossIcon";
 export * from "./DashIcon";
-export * from "./EditSquareIcon";
 export * from "./FireIcon";
 export * from "./ListIcon";
 export * from "./PauseIcon";

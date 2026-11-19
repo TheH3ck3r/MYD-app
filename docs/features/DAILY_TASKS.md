@@ -110,19 +110,24 @@ tree store and rejects `paused`.
 
 ## 7. Streak calculations
 
-Streaks consider **Daily Tasks only**, not Regular Tasks. They should operate on root scheduled occurrences, not count children as extra independent scheduled tasks.
+Streaks consider **Daily Tasks only** and inspect roots and every nested subtask
+of each scheduled occurrence. Each qualifying day counts once regardless of tree
+size. Parent and descendant outcomes are evaluated independently.
 
 | Completed day condition                       | Perfect      | Active                     |
 | --------------------------------------------- | ------------ | -------------------------- |
-| All root tasks `done`                         | +1           | +1                         |
+| All tasks and subtasks `done`                 | +1           | +1                         |
 | Mix of `done` and `excused`, no failures      | Reset        | +1                         |
-| All root tasks `excused`                      | Reset        | Neutral (retain count, +0) |
-| Any root task `failed` or unmarked at day end | Reset        | Reset                      |
+| All tasks and subtasks `excused`              | Reset        | Neutral (retain count, +0) |
+| Any node `failed` or unmarked at day end      | Reset        | Reset                      |
 | No root tasks scheduled                       | Neutral (+0) | Neutral (+0)               |
 
 - The current incomplete day should not be mistaken for an ended failed day.
 - A neutral Active day bridges streak continuity: if a successful day follows, the count resumes from its previous value.
 - Mixed-status subtask behavior follows the approved propagation table above.
+- Full-tree streak evaluation does not change status propagation. Historical
+  counters are recalculated on reads; adopting these rules can reduce existing
+  values without changing any persisted status or requiring a SQL migration.
 
 ## 8. Data integrity and acceptance scenarios
 

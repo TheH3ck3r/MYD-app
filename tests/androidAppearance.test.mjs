@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 test("Expo prebuild retains the launcher wrapper, splash branding and dark system bars", () => {
@@ -44,4 +45,19 @@ test("Expo prebuild retains the launcher wrapper, splash branding and dark syste
     )._,
     "#121417",
   );
+  assert.equal(
+    colors.resources.color.find((item) => item.$.name === "iconBackground")._,
+    "#121417",
+  );
+});
+
+test("splash wordmark contains vector outlines rather than a serialized geometry object", () => {
+  const xml = readFileSync(
+    new URL("../assets/branding/launch-wordmark.xml", import.meta.url),
+    "utf8",
+  );
+  const path = xml.match(/android:pathData="([^"]+)"/)?.[1];
+  assert.ok(path && path.length > 100);
+  assert.match(path, /^M/);
+  assert.doesNotMatch(path, /[^MmZzLlHhVvCcSsQqTtAaEe0-9.,+\-\s]/);
 });

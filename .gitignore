@@ -41,7 +41,6 @@ example
 .vscode
 
 # Other
-
 .idea
 
 # Local release signing credentials and build artifacts

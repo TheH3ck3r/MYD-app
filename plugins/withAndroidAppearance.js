@@ -7,10 +7,10 @@ const {
   withDangerousMod,
 } = require("expo/config-plugins");
 
-// Keep generated Expo icon resources intact and wrap them in our own drawable.
+// Artwork already includes safe padding; do not shrink the foreground again.
 const launcherIcon = `<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
   <background android:drawable="@color/iconBackground" />
-  <foreground><inset android:inset="16dp" android:drawable="@mipmap/ic_launcher_foreground" /></foreground>
+  <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>
 `;
 

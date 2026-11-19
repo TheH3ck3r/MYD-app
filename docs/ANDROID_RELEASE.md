@@ -46,8 +46,8 @@ version changes require prebuild and cannot be combined with this flag.
 
 ## Android appearance verification
 
-`plugins/withAndroidAppearance.js` preserves the launcher artwork while adding
-an adaptive-icon inset. It also configures light navigation controls over the
+`plugins/withAndroidAppearance.js` preserves the launcher artwork's existing
+transparent padding without adding another inset. It also configures light navigation controls over the
 dark application background and an inherited native splash theme. On Android 12
 and newer, the splash shows the vector wordmark `Make your dream` below the logo;
 older Android versions retain the dark splash without the native branding image.

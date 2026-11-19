@@ -8,12 +8,14 @@ import {
   TaskList,
   AddTaskButton,
   TaskSheet,
-  RegularTaskFormSheet,
-  RegularTaskFormValues,
   ConfirmModal,
 } from "@/components";
 import { TaskFormState, TaskStatus } from "@/types/tasks";
-import { NoTasks } from "@/components/NoTasks";
+import {
+  RegularTaskFormSheet,
+  type RegularTaskFormValues,
+} from "@/components/regular/RegularTaskFormSheet";
+import { RegularEmptyState } from "@/components/regular/RegularEmptyState";
 import { Loader } from "@/ui/Loader";
 
 function TasksScreen() {
@@ -101,7 +103,7 @@ function TasksScreen() {
         {regularTasksStore.loading ? (
           <Loader />
         ) : regularTasksStore.tasks.length === 0 ? (
-          <NoTasks context="regular" />
+          <RegularEmptyState />
         ) : (
           <TaskList
             list={regularTasksStore.tasks}

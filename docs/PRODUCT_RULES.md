@@ -64,7 +64,11 @@ MYD-app is a personal Android task-management app that helps its owner follow th
 - If every scheduled task is `done` or `excused` **and at least one is `done`**: success, increase by 1.
 - If **all** scheduled tasks are `excused`: neutral day; preserve the existing streak count and continuity, but do not increase it.
 - If any task is `failed` or was left `todo` at day end: failure; reset the streak.
-- Streaks apply to root scheduled Daily Tasks, using the approved aggregation rules below.
+- Streaks inspect every node in scheduled Daily trees, including roots and all
+  nested subtasks. A qualifying day increments a streak once, not once per node.
+- Today is excluded until it ends. The counters are recomputed from historical
+  snapshots using the current rules, without rewriting recorded outcomes. After
+  adopting full-tree evaluation, existing streak values may decrease.
 
 ## Daily rules approved during implementation
 
@@ -75,7 +79,8 @@ MYD-app is a personal Android task-management app that helps its owner follow th
   children agree; otherwise they become `todo`. In particular, mixed `done` and
   `excused` is `todo`, resolving to `failed` when the day ends unless marked again.
 - Manual parent outcomes can differ from already marked child outcomes. Streaks
-  use the root outcome, not a second aggregation of all descendants.
+  inspect each stored outcome independently: marking a parent done does not hide
+  failed, excused or unfinished descendants. An unfinished parent also counts.
 - A day with zero scheduled roots is neutral for both streaks: preserve continuity
   and the existing count without increasing it.
 - New schedules default to today. The user may choose a future start date;

@@ -1,6 +1,15 @@
-import type { DailySnapshot } from "../types/dailyTasks";
+import type {
+  DailySnapshot,
+  DailyStatus,
+  DailyTaskNode,
+} from "../types/dailyTasks";
 import { resolveDailyDay } from "./dailyHistory";
 import { shiftDailyDate } from "./dailyRecurrence";
+
+const collectStatuses = (tree: DailyTaskNode): DailyStatus[] => [
+  tree.status,
+  ...tree.children.flatMap(collectStatuses),
+];
 
 export const calculateDailyStreaks = (
   snapshot: DailySnapshot,
@@ -22,8 +31,8 @@ export const calculateDailyStreaks = (
     date >= first;
     date = shiftDailyDate(date, -1)
   ) {
-    const statuses = resolveDailyDay(snapshot, date, today).map(
-      (item) => item.tree.status,
+    const statuses = resolveDailyDay(snapshot, date, today).flatMap((item) =>
+      collectStatuses(item.tree),
     );
     // Empty days bridge both streaks without increasing either count.
     if (statuses.length > 0) {

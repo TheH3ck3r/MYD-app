@@ -18,8 +18,13 @@ current dates with stable stored date labels.
   Already marked descendants retain their status.
 - An affected ancestor adopts the common direct-child status, or `todo` for mixed
   children. This applies equally to `done`, `excused`, `failed`, and `todo`.
-- Streaks inspect root outcomes. A manually marked root may differ from previously
-  marked children, as in Regular.
+- After APK review, the developer approved streak evaluation across every node
+  of each scheduled tree. A manually marked root may differ from previously
+  marked children, as in Regular; no parent's outcome overrides a descendant's
+  outcome for streaks. Every successful day adds one regardless of node count.
+- Existing history is recalculated under these rules without rewriting statuses
+  or migrating the database. Previously hidden descendant failures or excused
+  outcomes can shorten existing streaks. Today remains excluded.
 - Daily implements these rules independently in `src/utils/dailyStatus.ts`.
 
 ## Calendar decision
